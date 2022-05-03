@@ -1,9 +1,8 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.EventSystems;
 
-public class CameraDrag : MonoBehaviour, IDragHandler, IBeginDragHandler, IEndDragHandler
+public class CameraDrag : MonoBehaviour
 {
     Vector3 lastPos;
     Vector3 curPos;
@@ -14,10 +13,14 @@ public class CameraDrag : MonoBehaviour, IDragHandler, IBeginDragHandler, IEndDr
 
     bool lDown;
     bool rDown;
+    bool isDraging;
 
     void Update()
     {
         InputCheck();
+        EndDrag();
+        BeginDrag();
+        OnDrag();
     }
 
     void InputCheck()
@@ -26,19 +29,22 @@ public class CameraDrag : MonoBehaviour, IDragHandler, IBeginDragHandler, IEndDr
         rDown = Input.GetKey(KeyCode.Mouse1);
     }
 
-    public void OnBeginDrag(PointerEventData eventData)
+    void BeginDrag()
     {
         if (!rDown) return;
-        
-        lastPos = eventData.position;
+        if (isDraging) return;
+
+        lastPos = Input.mousePosition;
         cursorManager.CursorChange((int)CursorManager.CursorIndexes.ROTATE);
+        isDraging = true;
     }
 
-    public void OnDrag(PointerEventData eventData)
+    void OnDrag()
     {
         if (lDown) return;
+        if (!isDraging) return;
 
-        curPos = eventData.position;
+        curPos = Input.mousePosition;
         float xOffset = (curPos.x - lastPos.x) * rotationSpeed;
         float yOffset = (curPos.y - lastPos.y) * rotationSpeed;
 
@@ -46,8 +52,11 @@ public class CameraDrag : MonoBehaviour, IDragHandler, IBeginDragHandler, IEndDr
         lastPos = curPos;
     }
 
-    public void OnEndDrag(PointerEventData eventData)
+    void EndDrag()
     {
+        if (rDown) return;
+
+        isDraging = false;
         cursorManager.CursorChange((int)CursorManager.CursorIndexes.DEFAULT);
     }
 }

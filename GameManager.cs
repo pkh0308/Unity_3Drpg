@@ -9,16 +9,6 @@ public class GameManager : MonoBehaviour
     bool invenOpen;
     public bool InvenOpen { get { return invenOpen; } }
 
-    void Start()
-    {
-        
-    }
-
-    void Update()
-    {
-        
-    }
-
     public void SetPause(bool act)
     {
         pause = act;
@@ -39,5 +29,10 @@ public class GameManager : MonoBehaviour
     public void InventoryControll()
     {
         invenOpen = uiManager.ControllInventorySet();
+    }
+
+    public void ProgressStart(string name, float time)
+    {
+        uiManager.ControllProgressBarSet(name, time);
     }
 }

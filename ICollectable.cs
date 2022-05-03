@@ -6,7 +6,9 @@ public interface ICollectable
 {
     int ItemId { get; }
     int ItemCount { get; }
-    int SpendTime { get; }
+    float SpendTime { get; }
 
+    void StartCollect();
+    IEnumerator OnCollect();
     void CompleteCollect();
 }

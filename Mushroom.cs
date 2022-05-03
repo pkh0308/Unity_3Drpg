@@ -1,12 +1,25 @@
 ﻿using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class Mushroom : MonoBehaviour, ICollectable
 {
-    public int ItemId { get; }
-    public int ItemCount { get; }
-    public int SpendTime { get; }
+    [SerializeField] int itemId;
+    [SerializeField] int itemCount;
+    [SerializeField] float spendTime;
+    public int ItemId { get { return itemId; } }
+    public int ItemCount { get { return itemCount; } }
+    public float SpendTime { get { return spendTime; } }
+
+    public void StartCollect()
+    {
+        StartCoroutine(OnCollect());
+    }
+
+    public IEnumerator OnCollect()
+    {
+        yield return new WaitForSeconds(spendTime);
+        CompleteCollect();
+    }
 
     public void CompleteCollect()
     {
