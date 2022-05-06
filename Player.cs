@@ -130,8 +130,9 @@ public class Player : MonoBehaviour
                 switch (target.tag)
                 {
                     case "Npc":
-                        target.GetComponent<Npc>().Turn(transform.position);
-                        gameManager.StartConversation();
+                        Npc npcLogic = target.GetComponent<Npc>();
+                        npcLogic.Turn(transform.position);
+                        gameManager.StartConversation(npcLogic.NpcName, npcLogic.NpcId);
                         break;
                     case "Collectable":
                         ICollectable collectLogic = target.GetComponent<ICollectable>();
@@ -156,7 +157,6 @@ public class Player : MonoBehaviour
     {
         isCollecting = true;
         playerAnimator.SetBool(AnimationVar.isCollecting.ToString(), true);
-
         yield return new WaitForSeconds(time);
         isCollecting = false;
         playerAnimator.SetBool(AnimationVar.isCollecting.ToString(), false);

@@ -1,7 +1,7 @@
 ﻿using System.Collections;
 using UnityEngine;
 
-public class Mushroom : MonoBehaviour, ICollectable
+public class CollectableItem : MonoBehaviour, ICollectable
 {
     [SerializeField] int itemId;
     [SerializeField] int itemCount;

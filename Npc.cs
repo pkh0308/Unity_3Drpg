@@ -1,15 +1,11 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class Npc : MonoBehaviour
 {
-    GameObject target;
-
-    public void SetTarget(GameObject target)
-    {
-        this.target = target;
-    }
+    [SerializeField] int npcId;
+    public int NpcId { get { return npcId; } }
+    [SerializeField] string npcName;
+    public string NpcName { get { return npcName; } }
 
     public void Turn(Vector3 pos)
     {

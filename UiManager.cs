@@ -12,9 +12,34 @@ public class UiManager : MonoBehaviour
     public TextMeshProUGUI progressText;
     public Image progressBar;
 
+    public TextMeshProUGUI conv_NpcName;
+    public TextMeshProUGUI conv_ConversationText;
+    public GameObject conv_ExitBtn;
+    int conv_Idx;
+
+    string[] currentConversation;
+
     public void ControllConversationSet(bool act)
     {
         conversationSet.SetActive(act);
+    }
+
+    public void SetConversation(string npcName, string[] texts)
+    {
+        conv_Idx = 0;
+        conv_NpcName.text = npcName;
+        currentConversation = texts;
+        conv_ExitBtn.SetActive(texts.Length == 1 ? true : false);
+        conv_ConversationText.text = currentConversation[conv_Idx];
+    }
+
+    public void NextConversation()
+    {
+        if (conv_Idx >= currentConversation.Length - 1) return;
+
+        conv_Idx++;
+        if (conv_Idx == currentConversation.Length - 1) conv_ExitBtn.SetActive(true);
+        conv_ConversationText.text = currentConversation[conv_Idx];
     }
 
     public bool ControllInventorySet()
