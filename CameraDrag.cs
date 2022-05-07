@@ -1,6 +1,5 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
+using System.Collections;
 
 public class CameraDrag : MonoBehaviour
 {
@@ -18,9 +17,7 @@ public class CameraDrag : MonoBehaviour
     void Update()
     {
         InputCheck();
-        EndDrag();
         BeginDrag();
-        OnDrag();
     }
 
     void InputCheck()
@@ -37,26 +34,22 @@ public class CameraDrag : MonoBehaviour
         lastPos = Input.mousePosition;
         cursorManager.CursorChange((int)CursorManager.CursorIndexes.ROTATE);
         isDraging = true;
+        StartCoroutine(Drag());
     }
 
-    void OnDrag()
+    IEnumerator Drag()
     {
-        if (lDown) return;
-        if (!isDraging) return;
+        while(rDown && !lDown)
+        {
+            curPos = Input.mousePosition;
+            float xOffset = (curPos.x - lastPos.x) * rotationSpeed;
+            float yOffset = (curPos.y - lastPos.y) * rotationSpeed;
 
-        curPos = Input.mousePosition;
-        float xOffset = (curPos.x - lastPos.x) * rotationSpeed;
-        float yOffset = (curPos.y - lastPos.y) * rotationSpeed;
-
-        camMove.Turn(xOffset, yOffset);
-        lastPos = curPos;
-    }
-
-    void EndDrag()
-    {
-        if (rDown) return;
-
+            camMove.Turn(xOffset, yOffset);
+            lastPos = curPos;
+            yield return null;
+        }
         isDraging = false;
-        cursorManager.CursorChange((int)CursorManager.CursorIndexes.DEFAULT);
+        cursorManager.CursorChange((int)CursorManager.CursorIndexes.ROTATEEND);
     }
 }

@@ -5,6 +5,7 @@ using System.Collections.Generic;
 public class GameManager : MonoBehaviour
 {
     public UiManager uiManager;
+    public CursorManager cursorManager;
 
     bool pause;
     public bool Pause { get { return pause; } }
@@ -77,6 +78,7 @@ public class GameManager : MonoBehaviour
         uiManager.SetConversation(npcName, convDic[key]);
 
         uiManager.ControllConversationSet(true);
+        cursorManager.CursorChange((int)CursorManager.CursorIndexes.DEFAULT);
         pause = true;
     }
 

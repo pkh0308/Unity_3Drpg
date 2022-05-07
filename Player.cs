@@ -9,13 +9,14 @@ public class Player : MonoBehaviour
     bool wDown;
     bool mouseLeft;
     bool mouseLeftDown;
-    public bool isTargetMoving;
+    bool isTargetMoving;
     bool isCollecting;
+    bool isOverUi;
     int mask;
 
     [SerializeField] Transform moveReference;
     Vector3 targetPos;
-    public GameObject target;
+    GameObject target;
     public float speed;
     public float walkOffset;
     public Transform cameraReference;
@@ -23,6 +24,7 @@ public class Player : MonoBehaviour
     public Animator playerAnimator;
     public GameManager gameManager;
     public UiManager uiManager;
+    public CursorManager cursorManger;
 
     enum AnimationVar { isRunning, isWalking, isCollecting, collectDone }
     enum Tags { Player, Platform, Npc, Collectable }
@@ -56,18 +58,26 @@ public class Player : MonoBehaviour
 
         mouseLeft = Input.GetMouseButton(0);
         mouseLeftDown = Input.GetMouseButtonDown(0);
-        if (!mouseLeft) return;
-        if (EventSystem.current.IsPointerOverGameObject()) return;
+        isOverUi = EventSystem.current.IsPointerOverGameObject();
         
         if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out RaycastHit rayHit, Mathf.Infinity, mask))
         {
             switch (rayHit.collider.tag)
             {
                 case "Platform":
-                    SetTargetPos(rayHit.point);
+                    cursorManger.CursorChange((int)CursorManager.CursorIndexes.DEFAULT);
+                    if (mouseLeft) SetTargetPos(rayHit.point);
                     break;
                 case "Npc":
+                    cursorManger.CursorChange((int)CursorManager.CursorIndexes.CONV);
+                    if (!isTargetMoving && mouseLeftDown)
+                    {
+                        target = rayHit.collider.gameObject;
+                        SetTargetPos(rayHit.point);
+                    }
+                    break;
                 case "Collectable":
+                    cursorManger.CursorChange((int)CursorManager.CursorIndexes.COLLECT);
                     if (!isTargetMoving && mouseLeftDown)
                     {
                         target = rayHit.collider.gameObject;
