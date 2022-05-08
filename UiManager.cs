@@ -61,7 +61,7 @@ public class UiManager : MonoBehaviour
         switch(name)
         {
             case "Collectable":
-                progressText.text = "Collecting...";
+                progressText.text = "채집중...";
                 break;
         }
         StartCoroutine(Progress(time));

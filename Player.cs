@@ -59,7 +59,9 @@ public class Player : MonoBehaviour
         mouseLeft = Input.GetMouseButton(0);
         mouseLeftDown = Input.GetMouseButtonDown(0);
         isOverUi = EventSystem.current.IsPointerOverGameObject();
-        
+
+        if (isOverUi) return;
+
         if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out RaycastHit rayHit, Mathf.Infinity, mask))
         {
             switch (rayHit.collider.tag)
@@ -146,7 +148,7 @@ public class Player : MonoBehaviour
                         break;
                     case "Collectable":
                         ICollectable collectLogic = target.GetComponent<ICollectable>();
-                        StartCoroutine(CollectItem(collectLogic.SpendTime));
+                        StartCoroutine(CollectItem(collectLogic.SpendTime, collectLogic.ItemId, collectLogic.ItemCount));
                         collectLogic.StartCollect();
                         gameManager.ProgressStart(target.tag, collectLogic.SpendTime);
                         break;
@@ -163,13 +165,15 @@ public class Player : MonoBehaviour
         playerAnimator.SetBool(AnimationVar.isWalking.ToString(), wDown);
     }
 
-    IEnumerator CollectItem(float time)
+    IEnumerator CollectItem(float time, int id, int count)
     {
         isCollecting = true;
         playerAnimator.SetBool(AnimationVar.isCollecting.ToString(), true);
+
         yield return new WaitForSeconds(time);
         isCollecting = false;
         playerAnimator.SetBool(AnimationVar.isCollecting.ToString(), false);
         playerAnimator.SetTrigger(AnimationVar.collectDone.ToString());
+        gameManager.GetItem(id, count);
     }
 }

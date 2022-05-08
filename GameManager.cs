@@ -15,15 +15,25 @@ public class GameManager : MonoBehaviour
     Dictionary<int, string[]> convDic;
     Dictionary<int, int> npcConvMatchDic;
 
+    Dictionary<int, ItemData> itemDic;
+    Dictionary<int, int> invenDic;
+    List<int> invenList;
+    [SerializeField] ItemSlot[] invenSlots;
+
     void Awake()
     {
         convDic = new Dictionary<int, string[]>();
         npcConvMatchDic = new Dictionary<int, int>();
+        itemDic = new Dictionary<int, ItemData>();
+        invenDic = new Dictionary<int, int>();
+        invenList = new List<int>();
+
         Initilaize();
     }
 
     void Initilaize()
     {
+        // 대화 내용 저장
         TextAsset convText = Resources.Load("conversationData") as TextAsset;
         StringReader convReader = new StringReader(convText.text);
 
@@ -46,6 +56,7 @@ public class GameManager : MonoBehaviour
         }
         convReader.Close();
 
+        // npc별 대화 번호 저장
         TextAsset npcConvMatch = Resources.Load("npcConversation") as TextAsset;
         StringReader npcConvReader = new StringReader(npcConvMatch.text);
 
@@ -65,6 +76,30 @@ public class GameManager : MonoBehaviour
             }
         }
         npcConvReader.Close();
+
+        // 아이템 정보 저장
+        TextAsset itemList = Resources.Load("itemDictionary") as TextAsset;
+        StringReader itemReader = new StringReader(itemList.text);
+
+        while (itemReader != null)
+        {
+            string line = itemReader.ReadLine();
+            if (line == null) break;
+
+            line = itemReader.ReadLine();
+            while (line.Length > 1)
+            {
+                string[] datas = line.Split('@');
+                int id = int.Parse(datas[0]);
+                ItemData item = new ItemData(datas[1], datas[2]);
+                itemDic.Add(id, item);
+                invenDic.Add(id, 0);
+
+                line = itemReader.ReadLine();
+                if (line == null) break;
+            }
+        }
+        itemReader.Close();
     }
 
     public void SetPause(bool act)
@@ -96,5 +131,27 @@ public class GameManager : MonoBehaviour
     public void ProgressStart(string name, float time)
     {
         uiManager.ControllProgressBarSet(name, time);
+    }
+
+    public void GetItem(int id, int count)
+    {
+        if(invenDic[id] == 0)
+        {
+            if(invenList.Count == invenSlots.Length)
+            {
+                //인벤토리가 꽉 찼을 때 습득 시 처리
+            }
+            else
+            {
+                invenList.Add(id);
+                invenDic[id] += count;
+                int idx = invenList.IndexOf(id);
+                invenSlots[idx].SetImg(id, count);
+            }
+            return;
+        }
+
+        invenSlots[invenList.IndexOf(id)].ItemCount(count);
+        invenDic[id] += count;
     }
 }
