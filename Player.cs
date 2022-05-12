@@ -1,6 +1,8 @@
 ﻿using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.UI;
 
 public class Player : MonoBehaviour
 {
@@ -12,7 +14,10 @@ public class Player : MonoBehaviour
     bool isTargetMoving;
     bool isCollecting;
     bool isOverUi;
-    int mask;
+    int playerMask;
+
+    [SerializeField] GraphicRaycaster uiRaycaster;
+    PointerEventData p_data;
 
     [SerializeField] Transform moveReference;
     Vector3 targetPos;
@@ -27,12 +32,13 @@ public class Player : MonoBehaviour
     public CursorManager cursorManger;
 
     enum AnimationVar { isRunning, isWalking, isCollecting, collectDone }
-    enum Tags { Player, Platform, Npc, Collectable }
+    enum Tags { Player, Platform, Npc, Collectable, ItemSlot }
     enum Axis { Horizontal, Vertical }
 
     void Awake()
     {
-        mask = (-1) - (1 << LayerMask.NameToLayer(Tags.Player.ToString()));
+        playerMask = (-1) - (1 << LayerMask.NameToLayer(Tags.Player.ToString()));
+        p_data = new PointerEventData(null);
     }
 
     void Update()
@@ -60,9 +66,22 @@ public class Player : MonoBehaviour
         mouseLeftDown = Input.GetMouseButtonDown(0);
         isOverUi = EventSystem.current.IsPointerOverGameObject();
 
-        if (isOverUi) return;
+        if (gameManager.IsDraging) return;
+        if (isOverUi)
+        {
+            p_data.position = Input.mousePosition;
+            List<RaycastResult> list = new List<RaycastResult>();
+            uiRaycaster.Raycast(p_data, list);
 
-        if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out RaycastHit rayHit, Mathf.Infinity, mask))
+            if (list.Count > 0) 
+                if(list[0].gameObject.TryGetComponent(out ItemSlot slot))
+                    uiManager.ItemDescOn(slot.ItemId);
+
+            return;
+        }
+        uiManager.ItemDescOff();
+
+        if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out RaycastHit rayHit, Mathf.Infinity, playerMask))
         {
             switch (rayHit.collider.tag)
             {

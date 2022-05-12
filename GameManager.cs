@@ -1,6 +1,8 @@
 ﻿using UnityEngine;
 using System.IO;
 using System.Collections.Generic;
+using System;
+using System.Linq;
 
 public class GameManager : MonoBehaviour
 {
@@ -11,22 +13,31 @@ public class GameManager : MonoBehaviour
     public bool Pause { get { return pause; } }
     bool invenOpen;
     public bool InvenOpen { get { return invenOpen; } }
+    bool isDraging;
+    public bool IsDraging { get { return isDraging; } }
 
     Dictionary<int, string[]> convDic;
     Dictionary<int, int> npcConvMatchDic;
 
-    Dictionary<int, ItemData> itemDic;
     Dictionary<int, int> invenDic;
-    List<int> invenList;
+    int[] invenArr;
     [SerializeField] ItemSlot[] invenSlots;
+
+    public static Action<int, int> exchangeSlots;
+    public static Action<bool> setBoolDrag;
 
     void Awake()
     {
         convDic = new Dictionary<int, string[]>();
         npcConvMatchDic = new Dictionary<int, int>();
-        itemDic = new Dictionary<int, ItemData>();
         invenDic = new Dictionary<int, int>();
-        invenList = new List<int>();
+        invenArr = new int[invenSlots.Length];
+
+        exchangeSlots = (a, b) => { ExchangeSlots(a, b); };
+        setBoolDrag = (a) => { SetBoolDrag(a); };
+
+        for (int i = 0; i < invenSlots.Length; i++)
+            invenSlots[i].SetIdx(i);
 
         Initilaize();
     }
@@ -47,7 +58,7 @@ public class GameManager : MonoBehaviour
             {
                 string[] datas = line.Split('@');
                 string[] conversations = new string[datas.Length - 1];
-                System.Array.Copy(datas, 1, conversations, 0, datas.Length - 1);
+                Array.Copy(datas, 1, conversations, 0, datas.Length - 1);
                 convDic.Add(int.Parse(datas[0]), conversations);
 
                 line = convReader.ReadLine();
@@ -76,30 +87,6 @@ public class GameManager : MonoBehaviour
             }
         }
         npcConvReader.Close();
-
-        // 아이템 정보 저장
-        TextAsset itemList = Resources.Load("itemDictionary") as TextAsset;
-        StringReader itemReader = new StringReader(itemList.text);
-
-        while (itemReader != null)
-        {
-            string line = itemReader.ReadLine();
-            if (line == null) break;
-
-            line = itemReader.ReadLine();
-            while (line.Length > 1)
-            {
-                string[] datas = line.Split('@');
-                int id = int.Parse(datas[0]);
-                ItemData item = new ItemData(datas[1], datas[2]);
-                itemDic.Add(id, item);
-                invenDic.Add(id, 0);
-
-                line = itemReader.ReadLine();
-                if (line == null) break;
-            }
-        }
-        itemReader.Close();
     }
 
     public void SetPause(bool act)
@@ -135,23 +122,59 @@ public class GameManager : MonoBehaviour
 
     public void GetItem(int id, int count)
     {
+        //최초 획득 시
+        if(invenDic.ContainsKey(id) == false)
+        {
+            if (invenArr.Min() > 0)
+            {
+                //인벤토리가 꽉 찼을 때 습득 시 처리
+            }
+            else
+                invenDic.Add(id, 0);
+        }
+
+        //인벤토리에 없던 아이템 습득 시
         if(invenDic[id] == 0)
         {
-            if(invenList.Count == invenSlots.Length)
+            if(invenArr.Min() > 0)
             {
                 //인벤토리가 꽉 찼을 때 습득 시 처리
             }
             else
             {
-                invenList.Add(id);
+                for(int i = 0; i < invenArr.Length; i++)
+                {
+                    if (invenArr[i] > 0) continue;
+
+                    invenArr[i] = id;
+                    break;
+                }
                 invenDic[id] += count;
-                int idx = invenList.IndexOf(id);
-                invenSlots[idx].SetImg(id, count);
+                int idx = Array.IndexOf(invenArr, id);
+                invenSlots[idx].SetData(id, count);
             }
             return;
         }
 
-        invenSlots[invenList.IndexOf(id)].ItemCount(count);
+        //인벤토리에 있는 아이템 습득 시
+        invenSlots[Array.IndexOf(invenArr, id)].AddItem(count);
         invenDic[id] += count;
+    }
+
+    public void ExchangeSlots(int idx_1, int idx_2)
+    {
+        int temp = invenArr[idx_1];
+        invenArr[idx_1] = invenArr[idx_2];
+        invenArr[idx_2] = temp;
+    }
+
+    public void SetBoolDrag(bool act)
+    {
+        isDraging = act;
+    }
+
+    public void GameSave()
+    {
+        GoodsManager.Instance.Save();
     }
 }

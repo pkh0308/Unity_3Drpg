@@ -2,11 +2,20 @@
 using UnityEngine.UI;
 using TMPro;
 using System.Collections;
+using System.Collections.Generic;
+using System.IO;
+using System;
 
 public class UiManager : MonoBehaviour
 {
     public GameObject conversationSet;
     public GameObject inventorySet;
+    public TextMeshProUGUI goldText;
+
+    public GameObject itemDescription;
+    public TextMeshProUGUI itemNameText;
+    public TextMeshProUGUI itemDescText;
+    bool descriptionOn;
 
     public GameObject progressBarSet;
     public TextMeshProUGUI progressText;
@@ -16,8 +25,46 @@ public class UiManager : MonoBehaviour
     public TextMeshProUGUI conv_ConversationText;
     public GameObject conv_ExitBtn;
     int conv_Idx;
-
     string[] currentConversation;
+
+    Dictionary<int, ItemData> itemDic;
+
+    public static Action itemDescOff;
+
+    private void Awake()
+    {
+        itemDescOff = () => { ItemDescOff(); };
+
+        itemDic = new Dictionary<int, ItemData>();
+        GoldUpdate();
+        Initialize();
+    }
+
+    void Initialize()
+    {
+        // 아이템 정보 저장
+        TextAsset itemList = Resources.Load("itemDictionary") as TextAsset;
+        StringReader itemReader = new StringReader(itemList.text);
+
+        while (itemReader != null)
+        {
+            string line = itemReader.ReadLine();
+            if (line == null) break;
+
+            line = itemReader.ReadLine();
+            while (line.Length > 1)
+            {
+                string[] datas = line.Split('@');
+                int id = int.Parse(datas[0]);
+                ItemData item = new ItemData(datas[1], datas[2]);
+                itemDic.Add(id, item);
+
+                line = itemReader.ReadLine();
+                if (line == null) break;
+            }
+        }
+        itemReader.Close();
+    }
 
     public void ControllConversationSet(bool act)
     {
@@ -56,6 +103,26 @@ public class UiManager : MonoBehaviour
         }
     }
 
+    public void ItemDescOn(int id)
+    {
+        if (id == 0) { ItemDescOff(); return; }
+        if (descriptionOn) return;
+
+        itemNameText.text = itemDic[id].itemName;
+        itemDescText.text = itemDic[id].itemDescription;
+        descriptionOn = true;
+        itemDescription.transform.position = Input.mousePosition;
+        itemDescription.SetActive(true);
+    }
+
+    public void ItemDescOff()
+    {
+        if (!descriptionOn) return;
+
+        descriptionOn = false;
+        itemDescription.SetActive(false);
+    }
+
     public void ControllProgressBarSet(string name, float time)
     {
         switch(name)
@@ -80,5 +147,10 @@ public class UiManager : MonoBehaviour
             yield return null;
         }
         progressBarSet.SetActive(false);
+    }
+
+    public void GoldUpdate()
+    {
+        goldText.text = string.Format("{0:n0}", GoodsManager.Instance.Gold);
     }
 }
