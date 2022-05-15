@@ -97,16 +97,16 @@ public class GameManager : MonoBehaviour
     public void StartConversation(string npcName, int npcId)
     {
         int key = npcConvMatchDic[npcId];
-        uiManager.SetConversation(npcName, convDic[key]);
+        uiManager.Conv_Set(npcName, convDic[key]);
 
-        uiManager.ControllConversationSet(true);
+        uiManager.Conv_SetActive(true);
         cursorManager.CursorChange((int)CursorManager.CursorIndexes.DEFAULT);
         pause = true;
     }
 
     public void ExitConversation()
     {
-        uiManager.ControllConversationSet(false);
+        uiManager.Conv_SetActive(false);
         pause = false;
     }
 

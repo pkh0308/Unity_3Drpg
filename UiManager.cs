@@ -10,6 +10,7 @@ public class UiManager : MonoBehaviour
 {
     public GameObject conversationSet;
     public GameObject inventorySet;
+    public GameObject convQuestSet;
     public TextMeshProUGUI goldText;
 
     public GameObject itemDescription;
@@ -24,16 +25,26 @@ public class UiManager : MonoBehaviour
     public TextMeshProUGUI conv_NpcName;
     public TextMeshProUGUI conv_ConversationText;
     public GameObject conv_ExitBtn;
+    public GameObject conv_QuestBtn;
+    public GameObject conv_NextBtn;
+    [SerializeField] float conv_speed;
+    bool isTexting;
+    Coroutine co_Texting;
+
     int conv_Idx;
     string[] currentConversation;
+
+    [SerializeField] QuestPanel[] questPanels;
 
     Dictionary<int, ItemData> itemDic;
 
     public static Action itemDescOff;
+    public static Action<List<QuestData>> setQuestPanel;
 
-    private void Awake()
+    void Awake()
     {
         itemDescOff = () => { ItemDescOff(); };
+        setQuestPanel = (a) => { SetQuestPanels(a); };
 
         itemDic = new Dictionary<int, ItemData>();
         GoldUpdate();
@@ -66,27 +77,76 @@ public class UiManager : MonoBehaviour
         itemReader.Close();
     }
 
-    public void ControllConversationSet(bool act)
+    public void Conv_SetActive(bool act)
     {
         conversationSet.SetActive(act);
+        convQuestSet.SetActive(false);
     }
 
-    public void SetConversation(string npcName, string[] texts)
+    public void Conv_Set(string npcName, string[] texts)
     {
         conv_Idx = 0;
         conv_NpcName.text = npcName;
         currentConversation = texts;
-        conv_ExitBtn.SetActive(texts.Length == 1 ? true : false);
-        conv_ConversationText.text = currentConversation[conv_Idx];
+        conv_ExitBtn.SetActive(texts.Length == 1);
+        conv_QuestBtn.SetActive(texts.Length == 1);
+        conv_NextBtn.SetActive(texts.Length != 1);
+        co_Texting = StartCoroutine(Conv_Texting());
     }
 
-    public void NextConversation()
+    public void Conv_NextBtn()
     {
-        if (conv_Idx >= currentConversation.Length - 1) return;
-
         conv_Idx++;
-        if (conv_Idx == currentConversation.Length - 1) conv_ExitBtn.SetActive(true);
+        conv_ExitBtn.SetActive(false);
+        conv_QuestBtn.SetActive(false);
+        conv_NextBtn.SetActive(false);
+        co_Texting = StartCoroutine(Conv_Texting());
+    }
+
+    IEnumerator Conv_Texting()
+    {
+        isTexting = true;
+        string line = currentConversation[conv_Idx];
+        string temp = "";
+        WaitForSeconds seconds = new WaitForSeconds(conv_speed);
+
+        for(int i = 0; i < line.Length; i++)
+        {
+            temp += line[i];
+            conv_ConversationText.text = temp;
+            yield return seconds;
+        }
+        isTexting = false;
+        if (conv_Idx == currentConversation.Length - 1)
+        {
+            conv_ExitBtn.SetActive(true);
+            conv_QuestBtn.SetActive(true);
+        }
+        else
+            conv_NextBtn.SetActive(true);
+    }
+
+    public void Conv_CencleTexting()
+    {
+        if (isTexting == false) return;
+
+        StopCoroutine(co_Texting);
+        isTexting = false;
         conv_ConversationText.text = currentConversation[conv_Idx];
+
+        if (conv_Idx == currentConversation.Length - 1)
+        {
+            conv_ExitBtn.SetActive(true);
+            conv_QuestBtn.SetActive(true);
+        }
+        else
+            conv_NextBtn.SetActive(true);
+    }
+
+    public void ConvQuestOpen()
+    {
+        if(convQuestSet.activeSelf) convQuestSet.SetActive(false);
+        else convQuestSet.SetActive(true);
     }
 
     public bool ControllInventorySet()
@@ -152,5 +212,26 @@ public class UiManager : MonoBehaviour
     public void GoldUpdate()
     {
         goldText.text = string.Format("{0:n0}", GoodsManager.Instance.Gold);
+    }
+
+    public void SetQuestPanels(List<QuestData> datas)
+    {
+        int idx = 0;
+
+        while(idx < datas.Count)
+        {
+            questPanels[idx].SetQuestData(datas[idx]);
+            idx++;
+        }
+        while (idx < questPanels.Length)
+        {
+            questPanels[idx].gameObject.SetActive(false);
+            idx++;
+        }
+    }
+
+    public void QuestAcceptBtn()
+    {
+
     }
 }
