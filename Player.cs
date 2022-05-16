@@ -163,7 +163,7 @@ public class Player : MonoBehaviour
                     case "Npc":
                         Npc npcLogic = target.GetComponent<Npc>();
                         npcLogic.Turn(transform.position);
-                        gameManager.StartConversation(npcLogic.NpcName, npcLogic.NpcId);
+                        gameManager.StartConv(npcLogic.NpcName, npcLogic.NpcId);
                         break;
                     case "Collectable":
                         ICollectable collectLogic = target.GetComponent<ICollectable>();

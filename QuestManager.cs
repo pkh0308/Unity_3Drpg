@@ -15,11 +15,15 @@ public class QuestManager
         }
     }
 
-    Dictionary<int, QuestData> questDic;
+    Dictionary<int, QuestData> questIdDic;
+    List<int> npcIds;
+    Dictionary<int, List<QuestData>> npcIdDic;
 
     public QuestManager()
     {
-        questDic = new Dictionary<int, QuestData>();
+        questIdDic = new Dictionary<int, QuestData>();
+        npcIds = new List<int>();
+        npcIdDic = new Dictionary<int, List<QuestData>>();
 
         //퀘스트 데이터 읽어오기
         TextAsset questData = Resources.Load("questData") as TextAsset;
@@ -35,8 +39,11 @@ public class QuestManager
             {
                 string[] datas = line.Split(',');
                 QuestData qd = new QuestData();
-                qd.SetQuestData(int.Parse(datas[0]), int.Parse(datas[1]), int.Parse(datas[2]), int.Parse(datas[3]), datas[4], datas[5]);
-                questDic.Add(qd.QuestId, qd);
+                int npcId = int.Parse(datas[1]);
+                //0 : QuesId, 1 : NpcId, 2 : QuestCount, 3 : TargetId, 4 : QuestType, 5 : QuestName
+                qd.SetQuestData(int.Parse(datas[0]), npcId, int.Parse(datas[2]), int.Parse(datas[3]), datas[4], datas[5]);
+                questIdDic.Add(qd.QuestId, qd);
+                if (!npcIds.Contains(npcId)) npcIds.Add(npcId);
 
                 for (int i = 6; i < datas.Length; i++)
                     qd.AddToConvList(int.Parse(datas[i]));
@@ -46,17 +53,27 @@ public class QuestManager
             }
         }
         questReader.Close();
+
+        //npcId로 분류해서 저장
+        for(int i = 0; i < npcIds.Count; i++)
+        {
+            List<QuestData> qList = new List<QuestData>();
+            int npcId = npcIds[i];
+
+            foreach (KeyValuePair<int, QuestData> pair in questIdDic)
+            {
+                if (pair.Value.QuestNpc == npcId)
+                    qList.Add(questIdDic[pair.Key]);
+            }
+            npcIdDic.Add(npcId, qList);
+        }
     }
 
-    public List<QuestData> QuestSearch(int id)
+    public List<QuestData> GetQuestDatas(int id)
     {
-        List<QuestData> qList = new List<QuestData>();
-
-        foreach(KeyValuePair<int, QuestData> pair in questDic)
-        {
-            if (pair.Value.QuestNpc == id)
-                qList.Add(questDic[pair.Key]);
-        }
-        return qList.Count > 0 ? qList : null;
+        if (npcIdDic.TryGetValue(id, out List<QuestData> list))
+            return list;
+        else
+            return null;
     }
 }

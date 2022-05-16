@@ -25,6 +25,7 @@ public class GameManager : MonoBehaviour
 
     public static Action<int, int> exchangeSlots;
     public static Action<bool> setBoolDrag;
+    public static Action<int> startQuestConv;
 
     void Awake()
     {
@@ -35,6 +36,7 @@ public class GameManager : MonoBehaviour
 
         exchangeSlots = (a, b) => { ExchangeSlots(a, b); };
         setBoolDrag = (a) => { SetBoolDrag(a); };
+        startQuestConv = (a) => { StartQuestConv(a); };
 
         for (int i = 0; i < invenSlots.Length; i++)
             invenSlots[i].SetIdx(i);
@@ -94,17 +96,26 @@ public class GameManager : MonoBehaviour
         pause = act;
     }
 
-    public void StartConversation(string npcName, int npcId)
+    public void StartConv(string npcName, int npcId)
     {
         int key = npcConvMatchDic[npcId];
         uiManager.Conv_Set(npcName, convDic[key]);
 
         uiManager.Conv_SetActive(true);
+        uiManager.SetQuestPanels(npcId);
         cursorManager.CursorChange((int)CursorManager.CursorIndexes.DEFAULT);
         pause = true;
     }
 
-    public void ExitConversation()
+    public void StartQuestConv(int convId)
+    {
+        uiManager.Conv_QuestSet(convDic[convId]);
+        uiManager.Conv_SetActive(true);
+        cursorManager.CursorChange((int)CursorManager.CursorIndexes.DEFAULT);
+        pause = true;
+    }
+
+    public void ExitConv()
     {
         uiManager.Conv_SetActive(false);
         pause = false;

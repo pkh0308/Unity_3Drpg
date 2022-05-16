@@ -16,9 +16,11 @@ public class GoodsManager
 
     int gold;
     public int Gold { get { return gold; } }
+    public enum Goods { Gold }
+
     public GoodsManager()
     {
-        gold = PlayerPrefs.HasKey("Gold") ? PlayerPrefs.GetInt("Gold") : 0;
+        gold = PlayerPrefs.HasKey(Goods.Gold.ToString()) ? PlayerPrefs.GetInt(Goods.Gold.ToString()) : 0;
     }
 
     public bool GetGold(int amount)
@@ -41,6 +43,6 @@ public class GoodsManager
 
     public void Save()
     {
-        PlayerPrefs.SetInt("Gold", gold);
+        PlayerPrefs.SetInt(Goods.Gold.ToString(), gold);
     }
 }

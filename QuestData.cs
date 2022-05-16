@@ -20,7 +20,7 @@ public class QuestData
     public QuestType type;
 
     int curCount;
-    List<int> convList;
+    public readonly List<int> convList;
 
     public QuestData()
     {
@@ -51,6 +51,5 @@ public class QuestData
     public void QuestCountUp(int cnt)
     {
         curCount += cnt;
-        if (curCount >= questCount) questStatus = 1;
     }
 }
