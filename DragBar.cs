@@ -8,7 +8,7 @@ public class DragBar : MonoBehaviour, IDragHandler, IBeginDragHandler, IEndDragH
 {
     public GameObject targetObject;
     Vector3 beforePos;
-    public Vector3 dif;
+    Vector3 dif;
     [SerializeField] float offset;
 
     public void OnBeginDrag(PointerEventData eventData)

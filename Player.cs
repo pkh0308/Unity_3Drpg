@@ -57,10 +57,8 @@ public class Player : MonoBehaviour
         vAxis = Input.GetAxisRaw(Axis.Vertical.ToString());
         wDown = Input.GetKey(KeyCode.LeftShift);
 
-        if(Input.GetKeyDown(KeyCode.I))
-        {
-            gameManager.InventoryControll();
-        }
+        if (Input.GetKeyDown(KeyCode.I)) uiManager.ControlInventorySet();
+        if (Input.GetKeyDown(KeyCode.Q)) uiManager.ControlQuestSet();
 
         mouseLeft = Input.GetMouseButton(0);
         mouseLeftDown = Input.GetMouseButtonDown(0);
@@ -163,7 +161,7 @@ public class Player : MonoBehaviour
                     case "Npc":
                         Npc npcLogic = target.GetComponent<Npc>();
                         npcLogic.Turn(transform.position);
-                        gameManager.StartConv(npcLogic.NpcName, npcLogic.NpcId);
+                        gameManager.Conv_Start(npcLogic.NpcName, npcLogic.NpcId);
                         break;
                     case "Collectable":
                         ICollectable collectLogic = target.GetComponent<ICollectable>();

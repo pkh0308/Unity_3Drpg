@@ -6,13 +6,12 @@ using System.Linq;
 
 public class GameManager : MonoBehaviour
 {
-    public UiManager uiManager;
-    public CursorManager cursorManager;
+    [SerializeField] UiManager uiManager;
+    [SerializeField] CursorManager cursorManager;
+    [SerializeField] PlayerQuest playerQuest;
 
     bool pause;
     public bool Pause { get { return pause; } }
-    bool invenOpen;
-    public bool InvenOpen { get { return invenOpen; } }
     bool isDraging;
     public bool IsDraging { get { return isDraging; } }
 
@@ -36,7 +35,7 @@ public class GameManager : MonoBehaviour
 
         exchangeSlots = (a, b) => { ExchangeSlots(a, b); };
         setBoolDrag = (a) => { SetBoolDrag(a); };
-        startQuestConv = (a) => { StartQuestConv(a); };
+        startQuestConv = (a) => { Conv_StartQuest(a); };
 
         for (int i = 0; i < invenSlots.Length; i++)
             invenSlots[i].SetIdx(i);
@@ -96,7 +95,7 @@ public class GameManager : MonoBehaviour
         pause = act;
     }
 
-    public void StartConv(string npcName, int npcId)
+    public void Conv_Start(string npcName, int npcId)
     {
         int key = npcConvMatchDic[npcId];
         uiManager.Conv_Set(npcName, convDic[key]);
@@ -107,7 +106,7 @@ public class GameManager : MonoBehaviour
         pause = true;
     }
 
-    public void StartQuestConv(int convId)
+    public void Conv_StartQuest(int convId)
     {
         uiManager.Conv_QuestSet(convDic[convId]);
         uiManager.Conv_SetActive(true);
@@ -115,15 +114,16 @@ public class GameManager : MonoBehaviour
         pause = true;
     }
 
-    public void ExitConv()
+    public void Conv_ExitBtn()
     {
         uiManager.Conv_SetActive(false);
         pause = false;
     }
 
-    public void InventoryControll()
+    public void Conv_QuestAcceptBtn()
     {
-        invenOpen = uiManager.ControllInventorySet();
+        Conv_ExitBtn();
+        playerQuest.QuestAccept();
     }
 
     public void ProgressStart(string name, float time)

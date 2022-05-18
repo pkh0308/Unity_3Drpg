@@ -11,6 +11,7 @@ public class UiManager : MonoBehaviour
     public GameObject conversationSet;
     public GameObject inventorySet;
     public GameObject convQuestSet;
+    public GameObject questSet;
     public TextMeshProUGUI goldText;
 
     public GameObject itemDescription;
@@ -82,7 +83,12 @@ public class UiManager : MonoBehaviour
     public void Conv_SetActive(bool act)
     {
         conversationSet.SetActive(act);
-        convQuestSet.SetActive(false);
+
+        if(act)
+        {
+            convQuestSet.SetActive(false);
+            conv_AccpetBtn.SetActive(false);
+        }
     }
 
     public void Conv_Set(string npcName, string[] texts)
@@ -191,18 +197,20 @@ public class UiManager : MonoBehaviour
         else convQuestSet.SetActive(true);
     }
 
-    public bool ControllInventorySet()
+    public void ControlInventorySet()
     {
         if (!inventorySet.activeSelf)
-        {
             inventorySet.SetActive(true);
-            return true;
-        }
         else
-        {
             inventorySet.SetActive(false);
-            return false;
-        }
+    }
+
+    public void ControlQuestSet()
+    {
+        if (!questSet.activeSelf)
+            questSet.SetActive(true);
+        else
+            questSet.SetActive(false);
     }
 
     public void ItemDescOn(int id)
@@ -280,10 +288,5 @@ public class UiManager : MonoBehaviour
             questPanels[idx].gameObject.SetActive(false);
             idx++;
         }
-    }
-
-    public void QuestAcceptBtn()
-    {
-
     }
 }
