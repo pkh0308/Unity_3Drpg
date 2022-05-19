@@ -4,14 +4,18 @@ using System.Collections.Generic;
 public class PlayerQuest : MonoBehaviour
 {
     List<QuestData> questList;
+    [SerializeField] QuestPanel[] questPanels;
+
+    [SerializeField] UiManager uiManager;
 
     void Awake()
     {
         questList = new List<QuestData>();
     }
 
-    public void QuestAccept()
+    public void QuestAccept(int questId)
     {
-        Debug.Log("QuestAccept");
+        questList.Add(QuestManager.Instance.GetDataById(questId));
+        uiManager.SetQuestPanels(questList);
     }
 }

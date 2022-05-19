@@ -52,4 +52,9 @@ public class QuestData
     {
         curCount += cnt;
     }
+
+    public void SetStatus(int status)
+    {
+        questStatus = status;
+    }
 }

@@ -14,6 +14,7 @@ public class GameManager : MonoBehaviour
     public bool Pause { get { return pause; } }
     bool isDraging;
     public bool IsDraging { get { return isDraging; } }
+    int tempQuestId;
 
     Dictionary<int, string[]> convDic;
     Dictionary<int, int> npcConvMatchDic;
@@ -24,7 +25,7 @@ public class GameManager : MonoBehaviour
 
     public static Action<int, int> exchangeSlots;
     public static Action<bool> setBoolDrag;
-    public static Action<int> startQuestConv;
+    public static Action<int, int> startQuestConv;
 
     void Awake()
     {
@@ -35,7 +36,7 @@ public class GameManager : MonoBehaviour
 
         exchangeSlots = (a, b) => { ExchangeSlots(a, b); };
         setBoolDrag = (a) => { SetBoolDrag(a); };
-        startQuestConv = (a) => { Conv_StartQuest(a); };
+        startQuestConv = (a, b) => { Conv_StartQuest(a, b); };
 
         for (int i = 0; i < invenSlots.Length; i++)
             invenSlots[i].SetIdx(i);
@@ -106,11 +107,12 @@ public class GameManager : MonoBehaviour
         pause = true;
     }
 
-    public void Conv_StartQuest(int convId)
+    public void Conv_StartQuest(int convId, int questId)
     {
         uiManager.Conv_QuestSet(convDic[convId]);
         uiManager.Conv_SetActive(true);
         cursorManager.CursorChange((int)CursorManager.CursorIndexes.DEFAULT);
+        tempQuestId = questId;
         pause = true;
     }
 
@@ -123,7 +125,8 @@ public class GameManager : MonoBehaviour
     public void Conv_QuestAcceptBtn()
     {
         Conv_ExitBtn();
-        playerQuest.QuestAccept();
+        playerQuest.QuestAccept(tempQuestId);
+        QuestManager.Instance.SetQuestStatus(tempQuestId, (int)QuestData.QuestStatusType.OnGoing);
     }
 
     public void ProgressStart(string name, float time)

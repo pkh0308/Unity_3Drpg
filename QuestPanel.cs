@@ -4,21 +4,18 @@ using TMPro;
 public class QuestPanel : MonoBehaviour
 {
     QuestData data;
-    public int QuestId { get { return data.QuestId; } }
-    public int QuestNpc { get { return data.QuestNpc; } }
-
+    public int QuestStatus { get { return data.QuestStatus; } }
     [SerializeField] TextMeshProUGUI questNameText;
-    
+
     public void SetQuestData(QuestData data)
     {
         this.data = data;
         questNameText.text = data.QuestName;
     }
 
-    public void OnClick()
+    public void OnClick_Npc()
     {
-        if(data.QuestStatus == (int)QuestData.QuestStatusType.NotBegin)
-            GameManager.startQuestConv(data.convList[0]);
-
+        if (data.QuestStatus == (int)QuestData.QuestStatusType.NotBegin)
+            GameManager.startQuestConv(data.convList[0], data.QuestId);
     }
 }

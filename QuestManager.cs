@@ -15,9 +15,9 @@ public class QuestManager
         }
     }
 
-    Dictionary<int, QuestData> questIdDic;
-    List<int> npcIds;
-    Dictionary<int, List<QuestData>> npcIdDic;
+    readonly Dictionary<int, QuestData> questIdDic;
+    readonly List<int> npcIds;
+    readonly Dictionary<int, List<QuestData>> npcIdDic;
 
     public QuestManager()
     {
@@ -75,5 +75,15 @@ public class QuestManager
             return list;
         else
             return null;
+    }
+
+    public QuestData GetDataById(int questId)
+    {
+        return questIdDic[questId];
+    }
+
+    public void SetQuestStatus(int id, int status)
+    {
+        questIdDic[id].SetStatus(status);
     }
 }

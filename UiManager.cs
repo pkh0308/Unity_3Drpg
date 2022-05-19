@@ -39,15 +39,20 @@ public class UiManager : MonoBehaviour
 
     [SerializeField] GameObject noQuestText;
     [SerializeField] QuestPanel[] questPanels;
-    Dictionary<int, ItemData> itemDic;
+    [SerializeField] GameObject[] questOnGoingPanels;
+    [SerializeField] GameObject[] questCompletePanels;
 
+    [SerializeField] GameObject noQuestTextForPlayer;
+    [SerializeField] QuestPanelForPlayer[] questPanelsForPlayer;
+    [SerializeField] GameObject[] questOnGoingPanelsForPlayer;
+    [SerializeField] GameObject[] questCompletePanelsForPlayer;
+
+    Dictionary<int, ItemData> itemDic;
     public static Action itemDescOff;
-    //public static Action<List<QuestData>> setQuestPanel;
 
     void Awake()
     {
         itemDescOff = () => { ItemDescOff(); };
-        //setQuestPanel = (a) => { SetQuestPanels(a); };
 
         itemDic = new Dictionary<int, ItemData>();
         GoldUpdate();
@@ -264,6 +269,7 @@ public class UiManager : MonoBehaviour
         goldText.text = string.Format("{0:n0}", GoodsManager.Instance.Gold);
     }
 
+    // for npc conversation quest panel
     public void SetQuestPanels(int npcId)
     {
         int idx = 0;
@@ -281,11 +287,72 @@ public class UiManager : MonoBehaviour
         while (idx < datas.Count)
         {
             questPanels[idx].SetQuestData(datas[idx]);
+            // -1 : Not Begin, 0 : OnGoing, 1 : Cleared
+            switch (questPanels[idx].QuestStatus)
+            {
+                case -1:
+                    questOnGoingPanels[idx].SetActive(false);
+                    questCompletePanels[idx].SetActive(false);
+                    break;
+                case 0:
+                    questOnGoingPanels[idx].SetActive(true);
+                    questCompletePanels[idx].SetActive(false);
+                    break;
+                case 1:
+                    questOnGoingPanels[idx].SetActive(false);
+                    questCompletePanels[idx].SetActive(true);
+                    break;
+                default:
+                    Debug.Log(questPanels[idx].QuestStatus);
+                    break;
+            }
             idx++;
         }
         while (idx < questPanels.Length)
         {
             questPanels[idx].gameObject.SetActive(false);
+            idx++;
+        }
+    }
+
+    // for player quest panel 
+    public void SetQuestPanels(List<QuestData> datas)
+    {
+        int idx = 0;
+        if (datas == null)
+        {
+            foreach (var panel in questPanelsForPlayer)
+                panel.gameObject.SetActive(false);
+
+            noQuestTextForPlayer.SetActive(true);
+            return;
+        }
+
+        noQuestTextForPlayer.SetActive(false);
+        while (idx < datas.Count)
+        {
+            questPanelsForPlayer[idx].SetQuestData(datas[idx]);
+            // -1 : Not Begin, 0 : OnGoing, 1 : Cleared
+            switch (questPanelsForPlayer[idx].QuestType)
+            {
+                case -1:
+                    questOnGoingPanelsForPlayer[idx].SetActive(false);
+                    questCompletePanelsForPlayer[idx].SetActive(false);
+                    break;
+                case 0:
+                    questOnGoingPanelsForPlayer[idx].SetActive(true);
+                    questCompletePanelsForPlayer[idx].SetActive(false);
+                    break;
+                case 1:
+                    questOnGoingPanelsForPlayer[idx].SetActive(false);
+                    questCompletePanelsForPlayer[idx].SetActive(true);
+                    break;
+            }
+            idx++;
+        }
+        while (idx < questPanelsForPlayer.Length)
+        {
+            questPanelsForPlayer[idx].gameObject.SetActive(false);
             idx++;
         }
     }
