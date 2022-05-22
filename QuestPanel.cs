@@ -15,7 +15,14 @@ public class QuestPanel : MonoBehaviour
 
     public void OnClick_Npc()
     {
-        if (data.QuestStatus == (int)QuestData.QuestStatusType.NotBegin)
-            GameManager.startQuestConv(data.convList[0], data.QuestId);
+        switch(data.QuestStatus)
+        {
+            case (int)QuestData.QuestStatusType.NotBegin:
+                GameManager.startQuestConv(data.GetConvId(), data.QuestId, (int)QuestData.QuestStatusType.NotBegin);
+                break;
+            case (int)QuestData.QuestStatusType.FullFill:
+                GameManager.startQuestConv(data.GetConvId(), data.QuestId, (int)QuestData.QuestStatusType.FullFill);
+                break;
+        }
     }
 }

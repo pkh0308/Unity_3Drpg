@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using UnityEngine;
 
 public class QuestManager
@@ -18,13 +19,15 @@ public class QuestManager
     readonly Dictionary<int, QuestData> questIdDic;
     readonly List<int> npcIds;
     readonly Dictionary<int, List<QuestData>> npcIdDic;
+    public Dictionary<int, QuestData> playerQuestDic;
 
     public QuestManager()
     {
         questIdDic = new Dictionary<int, QuestData>();
         npcIds = new List<int>();
         npcIdDic = new Dictionary<int, List<QuestData>>();
-
+        playerQuestDic = new Dictionary<int, QuestData>();
+        
         //퀘스트 데이터 읽어오기
         TextAsset questData = Resources.Load("questData") as TextAsset;
         StringReader questReader = new StringReader(questData.text);
@@ -40,15 +43,20 @@ public class QuestManager
                 string[] datas = line.Split(',');
                 QuestData qd = new QuestData();
                 int npcId = int.Parse(datas[1]);
-                //0 : QuesId, 1 : NpcId, 2 : QuestCount, 3 : TargetId, 4 : QuestType, 5 : QuestName
-                qd.SetQuestData(int.Parse(datas[0]), npcId, int.Parse(datas[2]), int.Parse(datas[3]), datas[4], datas[5]);
+                //0 : QuesId, 1 : NpcId, 2 : QuestCount, 3 : TargetId, 4 : QuestType, 5 : QuestName, 6 : QuestDescription, 7 : Rewards, 8 : ConvIds
+                qd.SetQuestData(int.Parse(datas[0]), npcId, int.Parse(datas[2]), int.Parse(datas[3]), datas[4], datas[5], datas[6]);
                 questIdDic.Add(qd.QuestId, qd);
                 if (!npcIds.Contains(npcId)) npcIds.Add(npcId);
 
-                for (int i = 6; i < datas.Length; i++)
-                    qd.AddToConvList(int.Parse(datas[i]));
+                string[] rewards = datas[7].Split('-');
+                string[] convIds = datas[8].Split('-');
 
-                line = questReader.ReadLine();
+                for (int i = 0; i < rewards.Length; i += 2)
+                    qd.AddToRewardList(new int[] { int.Parse(rewards[i]), int.Parse(rewards[i + 1]) });
+                for (int i = 0; i < rewards.Length; i++)
+                    qd.AddToConvList(int.Parse(convIds[i]));
+
+                    line = questReader.ReadLine();
                 if (line == null) break;
             }
         }
@@ -77,13 +85,40 @@ public class QuestManager
             return null;
     }
 
+    public void AddPlayerQuest(int questId)
+    {
+        playerQuestDic.Add(questId, questIdDic[questId]);
+    }
+
+    public void RemovePlayerQuest(int questId)
+    {
+        playerQuestDic.Remove(questId);
+    }
+
     public QuestData GetDataById(int questId)
     {
         return questIdDic[questId];
     }
 
-    public void SetQuestStatus(int id, int status)
+    public void SetQuestStatus(int questId, int status)
     {
-        questIdDic[id].SetStatus(status);
+        questIdDic[questId].SetStatus(status);
+    }
+
+    public void UpdateCollectQuest(int itemId, int count)
+    {
+        List<int> list = playerQuestDic.Keys.ToList();
+        for(int i = 0; i < list.Count; i++)
+        {
+            if (playerQuestDic[list[i]].type != QuestData.QuestType.Collect) continue;
+
+            if (playerQuestDic[list[i]].TargetId == itemId)
+                playerQuestDic[list[i]].QuestCountUp(count);
+        }
+    }
+
+    public void UpdateKillQuest(int monsterId)
+    {
+
     }
 }

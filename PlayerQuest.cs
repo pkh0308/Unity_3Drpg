@@ -3,19 +3,33 @@ using System.Collections.Generic;
 
 public class PlayerQuest : MonoBehaviour
 {
-    List<QuestData> questList;
     [SerializeField] QuestPanel[] questPanels;
 
+    [SerializeField] GameManager gameManager;
     [SerializeField] UiManager uiManager;
-
-    void Awake()
-    {
-        questList = new List<QuestData>();
-    }
 
     public void QuestAccept(int questId)
     {
-        questList.Add(QuestManager.Instance.GetDataById(questId));
-        uiManager.SetQuestPanels(questList);
+        QuestData data = QuestManager.Instance.GetDataById(questId);
+        data.ConvIdxUp();
+
+        if (data.type == QuestData.QuestType.Collect)
+            data.QuestCountUp(gameManager.GetItemCount(data.TargetId));
+        
+        uiManager.SetQuestPanels();
+    }
+
+    public void QuestClear(int questId)
+    {
+        QuestData data = QuestManager.Instance.GetDataById(questId);
+        List<int[]> rewards = data.rewardList;
+
+        if (data.type == QuestData.QuestType.Collect)
+            gameManager.SpendItem(data.TargetId, data.QuestCount);
+
+        for (int i = 0; i < rewards.Count; i++)
+            gameManager.GetItem(rewards[i][0], rewards[i][1]);
+
+        uiManager.SetQuestPanels();
     }
 }

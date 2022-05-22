@@ -25,7 +25,7 @@ public class GameManager : MonoBehaviour
 
     public static Action<int, int> exchangeSlots;
     public static Action<bool> setBoolDrag;
-    public static Action<int, int> startQuestConv;
+    public static Action<int, int, int> startQuestConv;
 
     void Awake()
     {
@@ -36,7 +36,7 @@ public class GameManager : MonoBehaviour
 
         exchangeSlots = (a, b) => { ExchangeSlots(a, b); };
         setBoolDrag = (a) => { SetBoolDrag(a); };
-        startQuestConv = (a, b) => { Conv_StartQuest(a, b); };
+        startQuestConv = (a, b, c) => { Conv_StartQuest(a, b, c); };
 
         for (int i = 0; i < invenSlots.Length; i++)
             invenSlots[i].SetIdx(i);
@@ -107,9 +107,9 @@ public class GameManager : MonoBehaviour
         pause = true;
     }
 
-    public void Conv_StartQuest(int convId, int questId)
+    public void Conv_StartQuest(int convId, int questId, int questStatus)
     {
-        uiManager.Conv_QuestSet(convDic[convId]);
+        uiManager.Conv_QuestSet(convDic[convId], questStatus);
         uiManager.Conv_SetActive(true);
         cursorManager.CursorChange((int)CursorManager.CursorIndexes.DEFAULT);
         tempQuestId = questId;
@@ -125,8 +125,18 @@ public class GameManager : MonoBehaviour
     public void Conv_QuestAcceptBtn()
     {
         Conv_ExitBtn();
-        playerQuest.QuestAccept(tempQuestId);
+        QuestManager.Instance.AddPlayerQuest(tempQuestId);
         QuestManager.Instance.SetQuestStatus(tempQuestId, (int)QuestData.QuestStatusType.OnGoing);
+        playerQuest.QuestAccept(tempQuestId);
+    }
+
+    public void Conv_QuestClearBtn()
+    {
+        Conv_ExitBtn();
+        QuestManager.Instance.RemovePlayerQuest(tempQuestId);
+        playerQuest.QuestClear(tempQuestId);
+        uiManager.SetQuestDesc(null);
+        QuestManager.Instance.SetQuestStatus(tempQuestId, (int)QuestData.QuestStatusType.Cleared);
     }
 
     public void ProgressStart(string name, float time)
@@ -136,6 +146,14 @@ public class GameManager : MonoBehaviour
 
     public void GetItem(int id, int count)
     {
+        //골드일 경우
+        if(id > 90000)
+        {
+            if(GoodsManager.Instance.GetGold(count) == false) Debug.Log("GetGold Failed...");
+            uiManager.UpdateGold();
+            return;
+        }
+
         //최초 획득 시
         if(invenDic.ContainsKey(id) == false)
         {
@@ -146,9 +164,11 @@ public class GameManager : MonoBehaviour
             else
                 invenDic.Add(id, 0);
         }
-
+        
+        QuestManager.Instance.UpdateCollectQuest(id, count);
+        uiManager.UpdateQuestDescCount();
         //인벤토리에 없던 아이템 습득 시
-        if(invenDic[id] == 0)
+        if (invenDic[id] == 0)
         {
             if(invenArr.Min() > 0)
             {
@@ -173,6 +193,36 @@ public class GameManager : MonoBehaviour
         //인벤토리에 있는 아이템 습득 시
         invenSlots[Array.IndexOf(invenArr, id)].AddItem(count);
         invenDic[id] += count;
+    }
+
+    public void SpendItem(int id, int count)
+    {
+        if (invenSlots[Array.IndexOf(invenArr, id)].SpendItem(count) == false)
+        {
+            Debug.Log("SpendItem Failed...");
+            return;
+        }
+        invenDic[id] -= count;
+        if (invenDic[id] == 0)
+            invenArr[GetItemSlotIdx(id)] = 0;
+    }
+
+    public int GetItemCount(int id)
+    {
+        if (invenDic.ContainsKey(id) == false)
+            return 0;
+        else
+            return invenDic[id];
+    }
+
+    public int GetItemSlotIdx(int id)
+    {
+        for (int idx = 0; idx < invenArr.Length; idx++)
+        {
+            if(invenArr[idx] == id)
+                return idx;
+        }
+        return -1;
     }
 
     public void ExchangeSlots(int idx_1, int idx_2)

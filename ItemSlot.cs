@@ -45,13 +45,12 @@ public class ItemSlot : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDrag
 
     public bool AddItem(int cnt)
     {
-        if (itemCount + cnt < 0) return false;
+        if (itemCount + cnt > int.MaxValue) return false;
 
         itemCount += cnt;
-        if(itemCount > 1)
+        if(itemCount == 1)
         {
-            itemCountText.text = string.Format("{0:n0}", itemCount);
-            itemCountText.gameObject.SetActive(true);
+            itemCountText.gameObject.SetActive(false);
         }
         else if(itemCount == 0)
         {
@@ -59,8 +58,33 @@ public class ItemSlot : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDrag
             itemImg.gameObject.SetActive(false);
         }
         else
-            itemCountText.gameObject.SetActive(false);
+        {
+            itemCountText.text = string.Format("{0:n0}", itemCount);
+            itemCountText.gameObject.SetActive(true);
+        }
+        return true;
+    }
 
+    public bool SpendItem(int cnt)
+    {
+        if (itemCount - cnt < 0) return false;
+
+        itemCount -= cnt;
+        if (itemCount == 1)
+        {
+            itemCountText.gameObject.SetActive(false);
+        }
+        else if (itemCount == 0)
+        {
+            itemId = 0;
+            itemCountText.gameObject.SetActive(false);
+            itemImg.gameObject.SetActive(false);
+        }
+        else
+        {
+            itemCountText.text = string.Format("{0:n0}", itemCount);
+            itemCountText.gameObject.SetActive(true);
+        }
         return true;
     }
     
