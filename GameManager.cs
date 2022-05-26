@@ -8,7 +8,9 @@ public class GameManager : MonoBehaviour
 {
     [SerializeField] UiManager uiManager;
     [SerializeField] CursorManager cursorManager;
+    [SerializeField] ShopManager shopManager;
     [SerializeField] PlayerQuest playerQuest;
+    [SerializeField] Npc[] npcDatas;
 
     bool pause;
     public bool Pause { get { return pause; } }
@@ -89,6 +91,34 @@ public class GameManager : MonoBehaviour
             }
         }
         npcConvReader.Close();
+
+        // npc 데이터 세팅
+        TextAsset npcData = Resources.Load("npcData") as TextAsset;
+        StringReader npcDataReader = new StringReader(npcData.text);
+
+        while (npcDataReader != null)
+        {
+            string line = npcDataReader.ReadLine();
+            if (line == null) break;
+
+            line = npcDataReader.ReadLine();
+            while (line.Length > 1)
+            {
+                string[] datas = line.Split(',');
+                int id = int.Parse(datas[0]);
+                for(int i = 0; i < npcDatas.Length; i++)
+                {
+                    if (npcDatas[i].NpcId != id) continue;
+
+                    npcDatas[i].SetNpcData(datas[1], bool.Parse(datas[2]));
+                    break;
+                }
+
+                line = npcDataReader.ReadLine();
+                if (line == null) break;
+            }
+        }
+        npcDataReader.Close();
     }
 
     public void SetPause(bool act)
@@ -96,13 +126,13 @@ public class GameManager : MonoBehaviour
         pause = act;
     }
 
-    public void Conv_Start(string npcName, int npcId)
+    public void Conv_Start(string npcName, int npcId, bool hasShop)
     {
         int key = npcConvMatchDic[npcId];
-        uiManager.Conv_Set(npcName, convDic[key]);
-
+        uiManager.Conv_Set(npcName, convDic[key], hasShop);
         uiManager.Conv_SetActive(true);
-        uiManager.SetQuestPanels(npcId);
+        uiManager.UpdateQuestPanels(npcId);
+        if (hasShop) shopManager.SetShopSlots(npcId);
         cursorManager.CursorChange((int)CursorManager.CursorIndexes.DEFAULT);
         pause = true;
     }

@@ -13,6 +13,7 @@ public class UiManager : MonoBehaviour
     public GameObject inventorySet;
     public GameObject convQuestSet;
     public GameObject questSet;
+    public GameObject convShopSet;
     public TextMeshProUGUI goldText;
 
     public GameObject itemDescription;
@@ -31,8 +32,10 @@ public class UiManager : MonoBehaviour
     [SerializeField] GameObject conv_AccpetBtn;
     [SerializeField] GameObject conv_ClearBtn;
     [SerializeField] GameObject conv_NextBtn;
+    [SerializeField] GameObject conv_ShopBtn;
     [SerializeField] float conv_speed;
     bool isTexting;
+    bool hasShop;
     int questStatus;
     Coroutine co_Texting;
 
@@ -43,9 +46,11 @@ public class UiManager : MonoBehaviour
     [SerializeField] QuestPanel[] questPanels;
     [SerializeField] GameObject[] questOnGoingPanels;
     [SerializeField] GameObject[] questCompletePanels;
+    [SerializeField] GameObject[] questFullFillChecks;
 
     [SerializeField] GameObject noQuestTextForPlayer;
     [SerializeField] QuestPanelForPlayer[] questPanelsForPlayer;
+    [SerializeField] GameObject[] questFullFillChecksForPlayer;
     [SerializeField] GameObject questInfoSet;
     [SerializeField] TextMeshProUGUI questInfoNameText;
     [SerializeField] TextMeshProUGUI questInfoDescripionText;
@@ -55,11 +60,15 @@ public class UiManager : MonoBehaviour
     Dictionary<int, ItemData> itemDic;
     public static Action itemDescOff;
     public static Action<QuestData> questDescSet;
+    public static Action updateQuestPanel;
+    public static Action updateGold;
 
     void Awake()
     {
         itemDescOff = () => { ItemDescOff(); };
         questDescSet = (a) => { SetQuestDesc(a); };
+        updateQuestPanel = () => { UpdateQuestPanels(); };
+        updateGold = () => { UpdateGold(); };
 
         itemDic = new Dictionary<int, ItemData>();
         UpdateGold();
@@ -82,7 +91,8 @@ public class UiManager : MonoBehaviour
             {
                 string[] datas = line.Split('@');
                 int id = int.Parse(datas[0]);
-                ItemData item = new ItemData(datas[1], datas[2]);
+                //0 : id, 1 : name, 2 : description, 3 : price for purchase, 4 : price for sell
+                ItemData item = new ItemData(id, datas[1], datas[2], int.Parse(datas[3]), int.Parse(datas[4]));
                 itemDic.Add(id, item);
 
                 line = itemReader.ReadLine();
@@ -92,7 +102,7 @@ public class UiManager : MonoBehaviour
         itemReader.Close();
 
         // 퀘스트 판넬 업데이트
-        SetQuestPanels();
+        UpdateQuestPanels();
     }
 
     //대화 관련
@@ -103,20 +113,23 @@ public class UiManager : MonoBehaviour
         if(act)
         {
             convQuestSet.SetActive(false);
+            convShopSet.SetActive(false);
             conv_AccpetBtn.SetActive(false);
             conv_ClearBtn.SetActive(false);
         }
     }
 
-    public void Conv_Set(string npcName, string[] texts)
+    public void Conv_Set(string npcName, string[] texts, bool hasShop)
     {
         conv_Idx = 0;
         questStatus = -1; //Not Quest
+        this.hasShop = hasShop;
         conv_NpcName.text = npcName;
         currentConversation = texts;
 
         conv_ExitBtn.SetActive(texts.Length == 1);
         conv_QuestBtn.SetActive(texts.Length == 1);
+        conv_ShopBtn.SetActive(hasShop && texts.Length == 1);
         co_Texting = StartCoroutine(Conv_Texting());
     }
 
@@ -139,6 +152,11 @@ public class UiManager : MonoBehaviour
         conv_QuestBtn.SetActive(false);
         conv_NextBtn.SetActive(false);
         co_Texting = StartCoroutine(Conv_Texting());
+    }
+
+    public void Conv_ShopBtn()
+    {
+        convShopSet.SetActive(convShopSet.activeSelf == false);
     }
 
     IEnumerator Conv_Texting()
@@ -179,6 +197,7 @@ public class UiManager : MonoBehaviour
                 {
                     conv_ExitBtn.SetActive(true);
                     conv_QuestBtn.SetActive(true);
+                    conv_ShopBtn.SetActive(hasShop);
                 }
                 else
                     conv_NextBtn.SetActive(true);
@@ -203,8 +222,7 @@ public class UiManager : MonoBehaviour
 
     public void Conv_QuestOpenBtn()
     {
-        if(convQuestSet.activeSelf) convQuestSet.SetActive(false);
-        else convQuestSet.SetActive(true);
+        convQuestSet.SetActive(convQuestSet.activeSelf == false);
     }
 
     // UI 관련
@@ -266,9 +284,24 @@ public class UiManager : MonoBehaviour
         itemDescription.SetActive(false);
     }
 
-    public string GetItemName(int id)
+    public string GetItemName(int itemId)
     {
-        return itemDic[id].itemName;
+        if (itemDic.TryGetValue(itemId, out ItemData data) == false)
+        {
+            Debug.Log("ItemId not in Dictionary...");
+            return null;
+        }
+        return data.itemName;
+    }
+
+    public ItemData GetItemData(int itemId)
+    {
+        if (itemDic.TryGetValue(itemId, out ItemData data) == false)
+        {
+            Debug.Log("ItemId not in Dictionary...");
+            return null;
+        }
+        return data;
     }
 
     public void UpdateGold()
@@ -278,7 +311,7 @@ public class UiManager : MonoBehaviour
 
     // 퀘스트 관련
     // for npc conversation quest panel
-    public void SetQuestPanels(int npcId)
+    public void UpdateQuestPanels(int npcId)
     {
         int idx = 0;
         List<QuestData> datas = QuestManager.Instance.GetQuestDatas(npcId);
@@ -295,6 +328,8 @@ public class UiManager : MonoBehaviour
         while (idx < datas.Count)
         {
             questPanels[idx].SetQuestData(datas[idx]);
+            questPanels[idx].gameObject.SetActive(true);
+            questFullFillChecks[idx].SetActive(questPanels[idx].QuestStatus == (int)QuestData.QuestStatusType.FullFill);
             switch (questPanels[idx].QuestStatus)
             {
                 case (int)QuestData.QuestStatusType.NotBegin:
@@ -327,7 +362,7 @@ public class UiManager : MonoBehaviour
     }
 
     // for player quest panel 
-    public void SetQuestPanels()
+    public void UpdateQuestPanels()
     {
         Dictionary<int, QuestData> datas = QuestManager.Instance.playerQuestDic;
         List<int> list = datas.Keys.ToList();
@@ -346,6 +381,7 @@ public class UiManager : MonoBehaviour
         while (idx < datas.Count)
         {
             questPanelsForPlayer[idx].SetQuestData(datas[list[idx]]);
+            questFullFillChecksForPlayer[idx].SetActive(questPanelsForPlayer[idx].QuestStatus == (int)QuestData.QuestStatusType.FullFill);
             idx++;
         }
         while (idx < questPanelsForPlayer.Length)
@@ -371,9 +407,9 @@ public class UiManager : MonoBehaviour
         }
         else
         {
-            questInfoNameText.text = data.QuestName;
-            questInfoDescripionText.text = " " + data.QuestDescription;
-            questCountText.text = itemDic[data.TargetId].itemName + " " + data.CurCount + "/" + data.QuestCount;
+            questInfoNameText.text = data.questName;
+            questInfoDescripionText.text = " " + data.questDescription;
+            questCountText.text = itemDic[data.targetId].itemName + " " + data.CurCount + "/" + data.maxCount;
             questInfoSet.SetActive(true);
         }
     }
@@ -382,6 +418,6 @@ public class UiManager : MonoBehaviour
     {
         if (questInfoSet.activeSelf == false) return;
 
-        questCountText.text = itemDic[curQuestData.TargetId].itemName + " " + curQuestData.CurCount + "/" + curQuestData.QuestCount;
+        questCountText.text = itemDic[curQuestData.targetId].itemName + " " + curQuestData.CurCount + "/" + curQuestData.maxCount;
     }
 }

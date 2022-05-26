@@ -4,14 +4,14 @@ using TMPro;
 public class QuestPanelForPlayer : MonoBehaviour
 {
     QuestData data;
-    public int QuestType { get { return data.QuestStatus; } }
+    public int QuestStatus { get { return data.QuestStatus; } }
 
     [SerializeField] TextMeshProUGUI questNameText;
 
     public void SetQuestData(QuestData data)
     {
         this.data = data;
-        questNameText.text = data.QuestName;
+        questNameText.text = data.questName;
         gameObject.SetActive(true);
     }
 

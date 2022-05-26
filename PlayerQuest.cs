@@ -14,9 +14,9 @@ public class PlayerQuest : MonoBehaviour
         data.ConvIdxUp();
 
         if (data.type == QuestData.QuestType.Collect)
-            data.QuestCountUp(gameManager.GetItemCount(data.TargetId));
+            data.QuestCountUp(gameManager.GetItemCount(data.targetId));
         
-        uiManager.SetQuestPanels();
+        uiManager.UpdateQuestPanels();
     }
 
     public void QuestClear(int questId)
@@ -25,11 +25,11 @@ public class PlayerQuest : MonoBehaviour
         List<int[]> rewards = data.rewardList;
 
         if (data.type == QuestData.QuestType.Collect)
-            gameManager.SpendItem(data.TargetId, data.QuestCount);
+            gameManager.SpendItem(data.targetId, data.maxCount);
 
         for (int i = 0; i < rewards.Count; i++)
             gameManager.GetItem(rewards[i][0], rewards[i][1]);
 
-        uiManager.SetQuestPanels();
+        uiManager.UpdateQuestPanels();
     }
 }

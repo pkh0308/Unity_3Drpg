@@ -153,7 +153,7 @@ public class Player : MonoBehaviour
         }
         else
         {
-            if (Vector3.Distance(transform.position, targetPos) < 1.2f)
+            if (Vector3.Distance(transform.position, targetPos) < 1.0f)
             {
                 Turn();
                 switch (target.tag)
@@ -161,7 +161,7 @@ public class Player : MonoBehaviour
                     case "Npc":
                         Npc npcLogic = target.GetComponent<Npc>();
                         npcLogic.Turn(transform.position);
-                        gameManager.Conv_Start(npcLogic.NpcName, npcLogic.NpcId);
+                        gameManager.Conv_Start(npcLogic.NpcName, npcLogic.NpcId, npcLogic.HasShop);
                         break;
                     case "Collectable":
                         ICollectable collectLogic = target.GetComponent<ICollectable>();

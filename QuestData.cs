@@ -3,50 +3,41 @@ using UnityEngine;
 
 public class QuestData
 {
-    int questId;
+    public readonly int questId;
+    public readonly int maxCount;
+    public readonly int questNpc;
+    public readonly int targetId;
+    public readonly string questName;
+    public readonly string questDescription;
+
     int questStatus;
-    int questCount;
-    int questNpc;
-    int targetId;
-    string questName;
-    string questDescription;
-    public int QuestId { get { return questId; } }
     public int QuestStatus { get { return questStatus; } }
-    public int QuestCount { get { return questCount; } }
-    public int QuestNpc { get { return questNpc; } }
-    public int TargetId { get { return targetId; } }
-    public string QuestName { get { return questName; } }
-    public string QuestDescription { get { return questDescription; } }
+    int curCount;
+    public int CurCount { get { return curCount; } }
 
     public enum QuestStatusType { NotBegin = 0, OnGoing = 1, FullFill = 2, Cleared = 3 }
     public enum QuestType { Collect, Kill }
-    public QuestType type;
+    public QuestType type; 
 
-    int curCount;
-    public int CurCount { get { return curCount; } }
     int convIdx;
     public readonly List<int> convList;
     public readonly List<int[]> rewardList;
 
-    public QuestData()
+    public QuestData(int id, int npc, int count, int target, string type, string name, string description)
     {
         convList = new List<int>();
         rewardList = new List<int[]>();
         convIdx = 0;
-    }
-    
-    public void SetQuestData(int id, int npc, int count, int target, string type, string name, string description)
-    {
+        curCount = 0;
+
         questId = id;
-        questCount = count;
+        maxCount = count;
         questNpc = npc;
         questStatus = (int)QuestStatusType.NotBegin;
         targetId = target;
         this.type = type == QuestType.Collect.ToString() ? QuestType.Collect : QuestType.Kill;
         questName = name;
         questDescription = description;
-
-        curCount = 0;
     }
 
     public void AddToConvList(int convId)
@@ -71,8 +62,8 @@ public class QuestData
 
     public void QuestCountUp(int cnt)
     {
-        curCount = Mathf.Clamp(curCount + cnt, 0, questCount);
-        if (curCount == questCount) 
+        curCount = Mathf.Clamp(curCount + cnt, 0, maxCount);
+        if (curCount == maxCount) 
             questStatus = (int)QuestStatusType.FullFill;
     }
 

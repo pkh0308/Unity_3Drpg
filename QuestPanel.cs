@@ -10,7 +10,7 @@ public class QuestPanel : MonoBehaviour
     public void SetQuestData(QuestData data)
     {
         this.data = data;
-        questNameText.text = data.QuestName;
+        questNameText.text = data.questName;
     }
 
     public void OnClick_Npc()
@@ -18,10 +18,10 @@ public class QuestPanel : MonoBehaviour
         switch(data.QuestStatus)
         {
             case (int)QuestData.QuestStatusType.NotBegin:
-                GameManager.startQuestConv(data.GetConvId(), data.QuestId, (int)QuestData.QuestStatusType.NotBegin);
+                GameManager.startQuestConv(data.GetConvId(), data.questId, (int)QuestData.QuestStatusType.NotBegin);
                 break;
             case (int)QuestData.QuestStatusType.FullFill:
-                GameManager.startQuestConv(data.GetConvId(), data.QuestId, (int)QuestData.QuestStatusType.FullFill);
+                GameManager.startQuestConv(data.GetConvId(), data.questId, (int)QuestData.QuestStatusType.FullFill);
                 break;
         }
     }

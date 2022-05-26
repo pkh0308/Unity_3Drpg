@@ -41,11 +41,10 @@ public class QuestManager
             while (line.Length > 1)
             {
                 string[] datas = line.Split(',');
-                QuestData qd = new QuestData();
                 int npcId = int.Parse(datas[1]);
                 //0 : QuesId, 1 : NpcId, 2 : QuestCount, 3 : TargetId, 4 : QuestType, 5 : QuestName, 6 : QuestDescription, 7 : Rewards, 8 : ConvIds
-                qd.SetQuestData(int.Parse(datas[0]), npcId, int.Parse(datas[2]), int.Parse(datas[3]), datas[4], datas[5], datas[6]);
-                questIdDic.Add(qd.QuestId, qd);
+                QuestData qd = new QuestData(int.Parse(datas[0]), npcId, int.Parse(datas[2]), int.Parse(datas[3]), datas[4], datas[5], datas[6]);
+                questIdDic.Add(qd.questId, qd);
                 if (!npcIds.Contains(npcId)) npcIds.Add(npcId);
 
                 string[] rewards = datas[7].Split('-');
@@ -70,7 +69,7 @@ public class QuestManager
 
             foreach (KeyValuePair<int, QuestData> pair in questIdDic)
             {
-                if (pair.Value.QuestNpc == npcId)
+                if (pair.Value.questNpc == npcId)
                     qList.Add(questIdDic[pair.Key]);
             }
             npcIdDic.Add(npcId, qList);
@@ -107,14 +106,18 @@ public class QuestManager
 
     public void UpdateCollectQuest(int itemId, int count)
     {
+        bool needUpdate = false;
         List<int> list = playerQuestDic.Keys.ToList();
         for(int i = 0; i < list.Count; i++)
         {
-            if (playerQuestDic[list[i]].type != QuestData.QuestType.Collect) continue;
+            QuestData data = playerQuestDic[list[i]];
+            if (data.type != QuestData.QuestType.Collect) continue;
+            if (data.targetId != itemId) continue;
 
-            if (playerQuestDic[list[i]].TargetId == itemId)
-                playerQuestDic[list[i]].QuestCountUp(count);
+            data.QuestCountUp(count);
+            if (data.QuestStatus == (int)QuestData.QuestStatusType.FullFill) needUpdate = true;
         }
+        if (needUpdate) UiManager.updateQuestPanel();
     }
 
     public void UpdateKillQuest(int monsterId)

@@ -29,15 +29,17 @@ public class GoodsManager
         if (temp > int.MaxValue) return false;
 
         gold = temp;
+        UiManager.updateGold();
         return true;
     }
 
-    public bool Purchase(int price)
+    public bool SpendGold(int price)
     {
         int temp = gold - price;
         if (temp < 0) return false;
 
         gold = temp;
+        UiManager.updateGold();
         return true;
     }
 
