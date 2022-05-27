@@ -43,9 +43,9 @@ public class Player : MonoBehaviour
 
     void Update()
     {
-        if (gameManager.Pause) return;
-        
         InputCheck();
+        if (gameManager.Pause) return;
+
         Move();
         TargetMove();
         Turn();
@@ -71,14 +71,20 @@ public class Player : MonoBehaviour
             List<RaycastResult> list = new List<RaycastResult>();
             uiRaycaster.Raycast(p_data, list);
 
-            if (list.Count > 0) 
-                if(list[0].gameObject.TryGetComponent(out ItemSlot slot))
+            if (list.Count > 0)
+            {
+                if (list[0].gameObject.TryGetComponent(out ItemSlot slot))
                     uiManager.ItemDescOn(slot.ItemId);
-
+                else if (list[0].gameObject.TryGetComponent(out ShopItem shop))
+                    if(shop.Data != null) 
+                        uiManager.ShopDescOn(shop.Data.itemId);
+            }
             return;
         }
         uiManager.ItemDescOff();
+        uiManager.ShopDescOff();
 
+        if (gameManager.Pause) return;
         if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out RaycastHit rayHit, Mathf.Infinity, playerMask))
         {
             switch (rayHit.collider.tag)

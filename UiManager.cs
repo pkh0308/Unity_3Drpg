@@ -9,6 +9,8 @@ using System.Linq;
 
 public class UiManager : MonoBehaviour
 {
+    [SerializeField] ShopManager shopManager;
+
     public GameObject conversationSet;
     public GameObject inventorySet;
     public GameObject convQuestSet;
@@ -19,7 +21,8 @@ public class UiManager : MonoBehaviour
     public GameObject itemDescription;
     public TextMeshProUGUI itemNameText;
     public TextMeshProUGUI itemDescText;
-    bool descriptionOn;
+    bool descOn;
+    bool shopDescOn;
 
     public GameObject progressBarSet;
     public TextMeshProUGUI progressText;
@@ -267,21 +270,38 @@ public class UiManager : MonoBehaviour
     public void ItemDescOn(int itemId)
     {
         if (itemId == 0) { ItemDescOff(); return; }
-        if (descriptionOn) return;
+        if (descOn) return;
 
         itemNameText.text = itemDic[itemId].itemName;
         itemDescText.text = itemDic[itemId].itemDescription;
-        descriptionOn = true;
+        descOn = true;
         itemDescription.transform.position = Input.mousePosition;
         itemDescription.SetActive(true);
     }
 
     public void ItemDescOff()
     {
-        if (!descriptionOn) return;
+        if (!descOn) return;
 
-        descriptionOn = false;
+        descOn = false;
         itemDescription.SetActive(false);
+    }
+
+    public void ShopDescOn(int itemId)
+    {
+        if (itemId == 0) { ShopDescOff(); return; }
+        if (shopDescOn) return;
+
+        shopManager.ShopItemDescOn(itemDic[itemId].itemName, itemDic[itemId].itemDescription, itemDic[itemId].priceForPurchase);
+        shopDescOn = true;
+    }
+
+    public void ShopDescOff()
+    {
+        if (!shopDescOn) return;
+
+        shopDescOn = false;
+        shopManager.ShopItemDescOff();
     }
 
     public string GetItemName(int itemId)

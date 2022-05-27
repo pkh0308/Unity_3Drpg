@@ -73,6 +73,21 @@ public class ShopManager : MonoBehaviour
         }
     }
 
+    public void ShopItemDescOn(string name, string desc, int price)
+    {
+        itemNameText.text = name;
+        itemDescText.text = desc;
+        itemPriceText.text = string.Format("{0:n0}", price);
+
+        infoSet.transform.position = Input.mousePosition;
+        infoSet.SetActive(true);
+    }
+
+    public void ShopItemDescOff()
+    {
+        infoSet.SetActive(false);
+    }
+
     public void PurchaseBtn(ShopItem item)
     {
         if (item.Data == null) return;
