@@ -32,7 +32,6 @@ public class Player : MonoBehaviour
     public CursorManager cursorManger;
 
     enum AnimationVar { isRunning, isWalking, isCollecting, collectDone }
-    enum Tags { Player, Platform, Npc, Collectable, ItemSlot }
     enum Axis { Horizontal, Vertical }
 
     void Awake()
@@ -89,24 +88,28 @@ public class Player : MonoBehaviour
         {
             switch (rayHit.collider.tag)
             {
-                case "Platform":
+                case Tags.Platform:
                     cursorManger.CursorChange((int)CursorManager.CursorIndexes.DEFAULT);
                     if (mouseLeft) SetTargetPos(rayHit.point);
                     break;
-                case "Npc":
+                case Tags.Npc:
                     cursorManger.CursorChange((int)CursorManager.CursorIndexes.CONV);
-                    if (!isTargetMoving && mouseLeftDown)
-                    {
-                        target = rayHit.collider.gameObject;
-                        SetTargetPos(rayHit.point);
-                    }
+                    SetTargetPos(rayHit);
                     break;
-                case "Collectable":
+                case Tags.Collectable:
                     cursorManger.CursorChange((int)CursorManager.CursorIndexes.COLLECT);
                     if (!isTargetMoving && mouseLeftDown)
                     {
                         target = rayHit.collider.gameObject;
-                        SetTargetPos(rayHit.point);
+                        SetTargetPos(rayHit);
+                    }
+                    break;
+                case Tags.Entrance:
+                    cursorManger.CursorChange((int)CursorManager.CursorIndexes.ENTRANCE);
+                    if (!isTargetMoving && mouseLeftDown)
+                    {
+                        target = rayHit.collider.gameObject;
+                        SetTargetPos(rayHit);
                     }
                     break;
                 default:
@@ -139,9 +142,20 @@ public class Player : MonoBehaviour
             transform.LookAt(transform.position + moveReference.position);
     }
 
+    //마우스 이동 시 호출
     void SetTargetPos(Vector3 target)
     {
         targetPos = new Vector3(target.x, transform.position.y, target.z);
+        isTargetMoving = true;
+    }
+
+    //오브젝트 클릭 시 호출
+    void SetTargetPos(RaycastHit rayHit)
+    {
+        if (isTargetMoving || !mouseLeftDown) return;
+        
+        target = rayHit.collider.gameObject;
+        targetPos = new Vector3(rayHit.point.x, transform.position.y, rayHit.point.z);
         isTargetMoving = true;
     }
 
@@ -164,16 +178,20 @@ public class Player : MonoBehaviour
                 Turn();
                 switch (target.tag)
                 {
-                    case "Npc":
+                    case Tags.Npc:
                         Npc npcLogic = target.GetComponent<Npc>();
                         npcLogic.Turn(transform.position);
                         gameManager.Conv_Start(npcLogic.NpcName, npcLogic.NpcId, npcLogic.HasShop);
                         break;
-                    case "Collectable":
+                    case Tags.Collectable:
                         ICollectable collectLogic = target.GetComponent<ICollectable>();
                         StartCoroutine(CollectItem(collectLogic.SpendTime, collectLogic.ItemId, collectLogic.ItemCount));
                         collectLogic.StartCollect();
                         gameManager.ProgressStart(target.tag, collectLogic.SpendTime);
+                        break;
+                    case Tags.Entrance:
+                        Entrance enterLogic = target.GetComponent<Entrance>();
+                        transform.position = enterLogic.GetPos();
                         break;
                 }
                 target = null;

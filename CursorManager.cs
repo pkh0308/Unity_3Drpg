@@ -3,7 +3,7 @@
 public class CursorManager : MonoBehaviour
 {
     public Texture2D[] cursorTextures;
-    public enum CursorIndexes { DEFAULT = 0, ROTATE = 1, CONV = 2, COLLECT = 3, ROTATEEND = 99 }
+    public enum CursorIndexes { DEFAULT = 0, ROTATE = 1, CONV = 2, COLLECT = 3, ENTRANCE = 4, ROTATEEND = 99 }
 
     bool isRotating;
     int currentIdx;

@@ -9,18 +9,21 @@ using System.Linq;
 
 public class UiManager : MonoBehaviour
 {
+    [SerializeField] CanvasScaler mainCanvasSacle;
     [SerializeField] ShopManager shopManager;
 
-    public GameObject conversationSet;
-    public GameObject inventorySet;
-    public GameObject convQuestSet;
-    public GameObject questSet;
-    public GameObject convShopSet;
-    public TextMeshProUGUI goldText;
+    [SerializeField] GameObject conversationSet;
+    [SerializeField] GameObject inventorySet;
+    [SerializeField] GameObject convQuestSet;
+    [SerializeField] GameObject questSet;
+    [SerializeField] GameObject convShopSet;
+    [SerializeField] TextMeshProUGUI goldText;
 
-    public GameObject itemDescription;
-    public TextMeshProUGUI itemNameText;
-    public TextMeshProUGUI itemDescText;
+    [SerializeField] GameObject itemDescription;
+    [SerializeField] TextMeshProUGUI itemNameText;
+    [SerializeField] TextMeshProUGUI itemDescText;
+    RectTransform descRect;
+    Vector2 descSize;
     bool descOn;
     bool shopDescOn;
 
@@ -68,6 +71,9 @@ public class UiManager : MonoBehaviour
 
     void Awake()
     {
+        descRect = itemDescription.GetComponent<RectTransform>();
+        descSize = descRect.sizeDelta * 0.8f;
+
         itemDescOff = () => { ItemDescOff(); };
         questDescSet = (a) => { SetQuestDesc(a); };
         updateQuestPanel = () => { UpdateQuestPanels(); };
@@ -244,7 +250,7 @@ public class UiManager : MonoBehaviour
     {
         switch(name)
         {
-            case "Collectable":
+            case Tags.Collectable:
                 progressText.text = "채집중...";
                 break;
         }
@@ -275,7 +281,12 @@ public class UiManager : MonoBehaviour
         itemNameText.text = itemDic[itemId].itemName;
         itemDescText.text = itemDic[itemId].itemDescription;
         descOn = true;
-        itemDescription.transform.position = Input.mousePosition;
+
+        descRect.position = Input.mousePosition;
+        if (Input.mousePosition.x + descSize.x > Screen.width)
+            descRect.position -= new Vector3(descSize.x, 0, 0);
+        if (Input.mousePosition.y < descSize.y)
+            descRect.position += new Vector3(0, descSize.y * 0.5f, 0);
         itemDescription.SetActive(true);
     }
 

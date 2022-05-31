@@ -12,9 +12,15 @@ public class ShopManager : MonoBehaviour
     [SerializeField] TextMeshProUGUI itemNameText;
     [SerializeField] TextMeshProUGUI itemDescText;
     [SerializeField] TextMeshProUGUI itemPriceText;
+    RectTransform infoSetRect;
+    Vector2 infoSetSize;
 
     [SerializeField] GameObject purchaseSet;
     [SerializeField] GameObject purchaseFailSet;
+    [SerializeField] Image purchaseItemImg;
+    [SerializeField] TextMeshProUGUI purchaseCountText;
+    [SerializeField] TextMeshProUGUI purchasePriceText;
+    int curCount;
 
     [SerializeField] GameManager gameManager;
     [SerializeField] UiManager uiManager;
@@ -23,6 +29,8 @@ public class ShopManager : MonoBehaviour
 
     void Awake()
     {
+        infoSetRect = infoSet.GetComponent<RectTransform>();
+        infoSetSize = infoSetRect.sizeDelta * 0.8f;
         npcShopDic = new Dictionary<int, List<int>>();
 
         // npc별 상점 정보 저장
@@ -79,7 +87,12 @@ public class ShopManager : MonoBehaviour
         itemDescText.text = desc;
         itemPriceText.text = string.Format("{0:n0}", price);
 
-        infoSet.transform.position = Input.mousePosition;
+        infoSetRect.position = Input.mousePosition;
+        if (Input.mousePosition.x + infoSetSize.x > Screen.width)
+            infoSetRect.position -= new Vector3(infoSetSize.x, 0, 0);
+        if (Input.mousePosition.y < infoSetSize.y)
+            infoSetRect.position += new Vector3(0, infoSetSize.y * 0.5f, 0);
+        infoSet.SetActive(true);
         infoSet.SetActive(true);
     }
 
@@ -92,18 +105,38 @@ public class ShopManager : MonoBehaviour
     {
         if (item.Data == null) return;
 
+        curCount = 1;
+        purchaseCountText.text = string.Format("{0:n0}", curCount);
+        purchasePriceText.text = string.Format("{0:n0}", item.Data.priceForPurchase);
+        purchaseItemImg.sprite = ImgContainer.getItemImg(item.Data.itemId);
         purchaseSet.SetActive(true);
         curItemData = item.Data;
     }
 
-    public void PurchaseExitBtn()
+    public void Purchase_ExitBtn()
     {
         purchaseSet.SetActive(false);
     }
 
-    public void PurchaseOkBtn()
+    public void Purchase_CountPlusBtn()
     {
-        if(GoodsManager.Instance.SpendGold(curItemData.priceForPurchase) == false)
+        curCount++;
+        purchaseCountText.text = string.Format("{0:n0}", curCount);
+        purchasePriceText.text = string.Format("{0:n0}", curItemData.priceForPurchase * curCount);
+    }
+
+    public void Purchase_CountMinusBtn()
+    {
+        if (curCount <= 1) return;
+            
+        curCount--;
+        purchaseCountText.text = string.Format("{0:n0}", curCount);
+        purchasePriceText.text = string.Format("{0:n0}", curItemData.priceForPurchase * curCount);
+    }
+
+    public void Purchase_OkBtn()
+    {
+        if(GoodsManager.Instance.SpendGold(curItemData.priceForPurchase * curCount) == false)
         {
             purchaseFailSet.SetActive(true);
             purchaseSet.SetActive(false);
@@ -111,11 +144,11 @@ public class ShopManager : MonoBehaviour
         }
 
         // 한개 구매로 테스트, 추후 다중구매 추가 구현
-        gameManager.GetItem(curItemData.itemId, 1);
+        gameManager.GetItem(curItemData.itemId, curCount);
         purchaseSet.SetActive(false);
     }
 
-    public void PurchaseFailBtn()
+    public void Purchase_FailBtn()
     {
         purchaseFailSet.SetActive(false);
     }
