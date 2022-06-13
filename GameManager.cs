@@ -12,6 +12,9 @@ public class GameManager : MonoBehaviour
     [SerializeField] PlayerQuest playerQuest;
     [SerializeField] Npc[] npcDatas;
 
+    [SerializeField] int stageIdx;
+    public int StageIdx { get { return stageIdx; } }
+
     bool pause;
     public bool Pause { get { return pause; } }
     bool isDraging;
@@ -271,4 +274,6 @@ public class GameManager : MonoBehaviour
     {
         GoodsManager.Instance.Save();
     }
+
+    //[BurstCompile(CompileSynchronously = true)]
 }

@@ -14,6 +14,7 @@ public class Player : MonoBehaviour
     bool isTargetMoving;
     bool isCollecting;
     bool isOverUi;
+    bool inBuilding;
     int playerMask;
 
     [SerializeField] GraphicRaycaster uiRaycaster;
@@ -82,7 +83,7 @@ public class Player : MonoBehaviour
         }
         uiManager.ItemDescOff();
         uiManager.ShopDescOff();
-
+        
         if (gameManager.Pause) return;
         if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out RaycastHit rayHit, Mathf.Infinity, playerMask))
         {
@@ -98,22 +99,14 @@ public class Player : MonoBehaviour
                     break;
                 case Tags.Collectable:
                     cursorManger.CursorChange((int)CursorManager.CursorIndexes.COLLECT);
-                    if (!isTargetMoving && mouseLeftDown)
-                    {
-                        target = rayHit.collider.gameObject;
-                        SetTargetPos(rayHit);
-                    }
+                    SetTargetPos(rayHit);
                     break;
                 case Tags.Entrance:
                     cursorManger.CursorChange((int)CursorManager.CursorIndexes.ENTRANCE);
-                    if (!isTargetMoving && mouseLeftDown)
-                    {
-                        target = rayHit.collider.gameObject;
-                        SetTargetPos(rayHit);
-                    }
+                    SetTargetPos(rayHit);
                     break;
                 default:
-                    target = null;
+                    cursorManger.CursorChange((int)CursorManager.CursorIndexes.DEFAULT);
                     break;
             }
         }
@@ -123,11 +116,11 @@ public class Player : MonoBehaviour
     {
         if (isCollecting) return;
 
+        moveReference.position = wDown ? speed * walkOffset * new Vector3(hAxis, 0, vAxis).normalized
+                                       : speed * new Vector3(hAxis, 0, vAxis).normalized;
+        
         float angle = cameraReference.eulerAngles.y;
-        moveReference.position = wDown ? new Vector3(hAxis, 0, vAxis).normalized * speed * walkOffset
-                                       : new Vector3(hAxis, 0, vAxis).normalized * speed;
         moveReference.RotateAround(Vector3.zero, Vector3.up, angle);
-
         transform.position += moveReference.position * Time.deltaTime;
 
         playerAnimator.SetBool(AnimationVar.isRunning.ToString(), moveReference.position != Vector3.zero);
@@ -153,7 +146,9 @@ public class Player : MonoBehaviour
     void SetTargetPos(RaycastHit rayHit)
     {
         if (isTargetMoving || !mouseLeftDown) return;
-        
+        if(rayHit.collider.gameObject.CompareTag(Tags.Collectable) || rayHit.collider.gameObject.CompareTag(Tags.Entrance))
+            target = rayHit.collider.gameObject;
+
         target = rayHit.collider.gameObject;
         targetPos = new Vector3(rayHit.point.x, transform.position.y, rayHit.point.z);
         isTargetMoving = true;
@@ -191,7 +186,8 @@ public class Player : MonoBehaviour
                         break;
                     case Tags.Entrance:
                         Entrance enterLogic = target.GetComponent<Entrance>();
-                        transform.position = enterLogic.GetPos();
+                        transform.position = enterLogic.Enter();
+                        inBuilding = (inBuilding == false);
                         break;
                 }
                 target = null;
@@ -216,5 +212,14 @@ public class Player : MonoBehaviour
         playerAnimator.SetBool(AnimationVar.isCollecting.ToString(), false);
         playerAnimator.SetTrigger(AnimationVar.collectDone.ToString());
         gameManager.GetItem(id, count);
+    }
+
+    //장애물에 걸릴 시 처리
+    void OnCollisionEnter(Collision collision)
+    {
+        if (isTargetMoving == false) return;
+
+        target = null;
+        isTargetMoving = false;
     }
 }

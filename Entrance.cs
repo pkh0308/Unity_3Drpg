@@ -2,10 +2,16 @@
 
 public class Entrance : MonoBehaviour
 {
-    [SerializeField] Vector3 targetPos;
+    [SerializeField] Transform target;
+    [SerializeField] GameObject building;
+    [SerializeField] GameObject mainCamera;
+    [SerializeField] GameObject roomCamera;
 
-    public Vector3 GetPos()
+    public Vector3 Enter()
     {
-        return targetPos;
+        building.SetActive(building.activeSelf == false);
+        mainCamera.SetActive(mainCamera.activeSelf == false);
+        roomCamera.SetActive(roomCamera.activeSelf == false);
+        return target.position;
     }
 }
