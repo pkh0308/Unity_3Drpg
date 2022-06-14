@@ -102,6 +102,7 @@ public class Player : MonoBehaviour
                     SetTargetPos(rayHit);
                     break;
                 case Tags.Entrance:
+                case Tags.StageDoor:
                     cursorManger.CursorChange((int)CursorManager.CursorIndexes.ENTRANCE);
                     SetTargetPos(rayHit);
                     break;
@@ -188,6 +189,10 @@ public class Player : MonoBehaviour
                         Entrance enterLogic = target.GetComponent<Entrance>();
                         transform.position = enterLogic.Enter();
                         inBuilding = (inBuilding == false);
+                        break;
+                    case Tags.StageDoor:
+                        int nextStageIdx = target.GetComponent<StageDoor>().StageIdx;
+                        SceneController.Instance.EnterStage(gameManager.StageIdx, nextStageIdx);
                         break;
                 }
                 target = null;

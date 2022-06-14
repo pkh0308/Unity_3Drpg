@@ -8,4 +8,5 @@
     public const string Collectable = "Collectable";
     public const string ItemSlot = "ItemSlot";
     public const string Entrance = "Entrance";
+    public const string StageDoor = "StageDoor";
 }
