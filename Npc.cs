@@ -9,7 +9,7 @@ public class Npc : MonoBehaviour
     bool hasShop;
     public bool HasShop { get { return hasShop; } }
 
-    public void SetNpcData(string name, bool shop)
+    public void SetData(string name, bool shop)
     {
         npcName = name;
         hasShop = shop;

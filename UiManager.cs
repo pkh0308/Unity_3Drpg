@@ -272,6 +272,14 @@ public class UiManager : MonoBehaviour
             progressBarSet.SetActive(false);
         }
 
+    //Esc 입력 시 모든 UI창 비활성화
+    //유저 입력으로 열리는 UI창 추가 시 갱신 필요
+    public void CloseWindows()
+    {
+        inventorySet.SetActive(false);
+        questSet.SetActive(false);
+    }
+
     // 아이템 관련
     public void ItemDescOn(int itemId)
     {

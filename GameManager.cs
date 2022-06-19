@@ -10,10 +10,6 @@ public class GameManager : MonoBehaviour
     [SerializeField] CursorManager cursorManager;
     [SerializeField] ShopManager shopManager;
     [SerializeField] PlayerQuest playerQuest;
-    [SerializeField] Npc[] npcDatas;
-
-    [SerializeField] int stageIdx;
-    public int StageIdx { get { return stageIdx; } }
 
     bool pause;
     public bool Pause { get { return pause; } }
@@ -23,6 +19,7 @@ public class GameManager : MonoBehaviour
 
     Dictionary<int, string[]> convDic;
     Dictionary<int, int> npcConvMatchDic;
+    Dictionary<int, string[]> npcDataDic;
 
     Dictionary<int, int> invenDic;
     int[] invenArr;
@@ -36,6 +33,7 @@ public class GameManager : MonoBehaviour
     {
         convDic = new Dictionary<int, string[]>();
         npcConvMatchDic = new Dictionary<int, int>();
+        npcDataDic = new Dictionary<int, string[]>();
         invenDic = new Dictionary<int, int>();
         invenArr = new int[invenSlots.Length];
 
@@ -108,14 +106,8 @@ public class GameManager : MonoBehaviour
             while (line.Length > 1)
             {
                 string[] datas = line.Split(',');
-                int id = int.Parse(datas[0]);
-                for(int i = 0; i < npcDatas.Length; i++)
-                {
-                    if (npcDatas[i].NpcId != id) continue;
-
-                    npcDatas[i].SetNpcData(datas[1], bool.Parse(datas[2]));
-                    break;
-                }
+                // 0 : id, 1 : name, 2 : hasShop(상점 보유 여부)
+                npcDataDic.Add(int.Parse(datas[0]), new string[] { datas[1], datas[2] });
 
                 line = npcDataReader.ReadLine();
                 if (line == null) break;

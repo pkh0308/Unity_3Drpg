@@ -17,6 +17,7 @@ public class Player : MonoBehaviour
     bool inBuilding;
     int playerMask;
 
+    [SerializeField] GameObject mainCamera;
     [SerializeField] GraphicRaycaster uiRaycaster;
     PointerEventData p_data;
 
@@ -53,18 +54,24 @@ public class Player : MonoBehaviour
 
     void InputCheck()
     {
+        //유저 UI창 관련 인풋
+        if (Input.GetKeyDown(KeyCode.I)) uiManager.ControlInventorySet();
+        if (Input.GetKeyDown(KeyCode.Q)) uiManager.ControlQuestSet();
+        if (Input.GetKeyDown(KeyCode.Escape)) uiManager.CloseWindows();
+
+        //키보드 이동 관련 인풋
         hAxis = Input.GetAxisRaw(Axis.Horizontal.ToString());
         vAxis = Input.GetAxisRaw(Axis.Vertical.ToString());
         wDown = Input.GetKey(KeyCode.LeftShift);
 
-        if (Input.GetKeyDown(KeyCode.I)) uiManager.ControlInventorySet();
-        if (Input.GetKeyDown(KeyCode.Q)) uiManager.ControlQuestSet();
-
+        //마우스 이동 관련 인풋
         mouseLeft = Input.GetMouseButton(0);
         mouseLeftDown = Input.GetMouseButtonDown(0);
         isOverUi = EventSystem.current.IsPointerOverGameObject();
 
         if (gameManager.IsDraging) return;
+        //마우스가 UI 위에 있을 경우
+        //인벤토리나 상점일 경우 아이템 디스크립션 노출
         if (isOverUi)
         {
             p_data.position = Input.mousePosition;
@@ -83,7 +90,9 @@ public class Player : MonoBehaviour
         }
         uiManager.ItemDescOff();
         uiManager.ShopDescOff();
-        
+
+        //마우스가 UI 위에 있지 않을 경우
+        //Raycast로 플레이어를 제외한 타겟을 검출하고 타겟쪽으로 이동 및 커서 변경, 타겟에 따라 추가 행동(대화, 채집 등)
         if (gameManager.Pause) return;
         if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out RaycastHit rayHit, Mathf.Infinity, playerMask))
         {
@@ -177,7 +186,7 @@ public class Player : MonoBehaviour
                     case Tags.Npc:
                         Npc npcLogic = target.GetComponent<Npc>();
                         npcLogic.Turn(transform.position);
-                        gameManager.Conv_Start(npcLogic.NpcName, npcLogic.NpcId, npcLogic.HasShop);
+                        gameManager.Conv_Start(npcLogic.NpcName, npcLogic.NpcId, npcLogic.HasShop); 
                         break;
                     case Tags.Collectable:
                         ICollectable collectLogic = target.GetComponent<ICollectable>();
@@ -188,11 +197,11 @@ public class Player : MonoBehaviour
                     case Tags.Entrance:
                         Entrance enterLogic = target.GetComponent<Entrance>();
                         transform.position = enterLogic.Enter();
+                        mainCamera.SetActive(mainCamera.activeSelf == false);
                         inBuilding = (inBuilding == false);
                         break;
                     case Tags.StageDoor:
-                        int nextStageIdx = target.GetComponent<StageDoor>().StageIdx;
-                        SceneController.Instance.EnterStage(gameManager.StageIdx, nextStageIdx);
+                        LoadingSceneManager.enterStage(target.GetComponent<StageDoor>().StageIdx);
                         break;
                 }
                 target = null;
