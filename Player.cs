@@ -36,10 +36,20 @@ public class Player : MonoBehaviour
     enum AnimationVar { isRunning, isWalking, isCollecting, collectDone }
     enum Axis { Horizontal, Vertical }
 
+    //전투 관련
+    bool onCombat;
+    [SerializeField] int maxHp;
+    int curHp;
+    [SerializeField] float attackTime;
+    WaitForSeconds attackTimeOffset;
+
     void Awake()
     {
         playerMask = (-1) - (1 << LayerMask.NameToLayer(Tags.Player.ToString()));
         p_data = new PointerEventData(null);
+
+        attackTimeOffset = new WaitForSeconds(attackTime);
+        curHp = maxHp;
     }
 
     void Update()
@@ -235,5 +245,40 @@ public class Player : MonoBehaviour
 
         target = null;
         isTargetMoving = false;
+    }
+
+
+    //전투 관련
+    IEnumerator Attack()
+    {
+        onCombat = true;
+        //공격 애니메이션
+        //플레이어 피격 로직 호출
+
+        yield return attackTimeOffset;
+        onCombat = false;
+    }
+
+    public void OnDamaged(int dmg)
+    {
+        if (curHp - dmg > 0)
+        {
+            curHp -= dmg;
+            //피격 애니메이션
+        }
+        else
+        {
+            curHp = 0;
+            OnDie();
+        }
+    }
+
+    void OnDie()
+    {
+        StopAllCoroutines();
+        onCombat = false;
+        target = null;
+
+        //사망 애니메이션
     }
 }
