@@ -33,7 +33,7 @@ public class Player : MonoBehaviour
     public UiManager uiManager;
     public CursorManager cursorManger;
 
-    enum AnimationVar { isRunning, isWalking, isCollecting, collectDone }
+    enum AnimationVar { isRunning, isWalking, isCollecting, collectDone, doAttack, onDamaged, onDie }
     enum Axis { Horizontal, Vertical }
 
     //전투 관련
@@ -41,6 +41,7 @@ public class Player : MonoBehaviour
     [SerializeField] int maxHp;
     int curHp;
     [SerializeField] float attackTime;
+    [SerializeField] int attackPower;
     WaitForSeconds attackTimeOffset;
 
     void Awake()
@@ -176,6 +177,7 @@ public class Player : MonoBehaviour
 
     void TargetMove()
     {
+        if (onCombat) return;
         if (!isTargetMoving || isCollecting) return;
 
         if(target == null)
@@ -213,6 +215,9 @@ public class Player : MonoBehaviour
                     case Tags.StageDoor:
                         LoadingSceneManager.enterStage(target.GetComponent<StageDoor>().StageIdx);
                         break;
+                    case Tags.Enemy:
+                        StartCoroutine(Attack());
+                        break;
                 }
                 target = null;
                 isTargetMoving = false;
@@ -247,13 +252,17 @@ public class Player : MonoBehaviour
         isTargetMoving = false;
     }
 
-
     //전투 관련
     IEnumerator Attack()
     {
         onCombat = true;
         //공격 애니메이션
-        //플레이어 피격 로직 호출
+        playerAnimator.SetTrigger(AnimationVar.doAttack.ToString());
+        //적 피격 로직 호출
+        if (target.TryGetComponent<IEnemy>(out IEnemy enemy) == false)
+            Debug.Log("It's not a enemy...");
+        else
+            enemy.OnDamaged(attackPower);
 
         yield return attackTimeOffset;
         onCombat = false;
@@ -264,7 +273,7 @@ public class Player : MonoBehaviour
         if (curHp - dmg > 0)
         {
             curHp -= dmg;
-            //피격 애니메이션
+            playerAnimator.SetTrigger(AnimationVar.onDamaged.ToString());
         }
         else
         {
@@ -278,7 +287,6 @@ public class Player : MonoBehaviour
         StopAllCoroutines();
         onCombat = false;
         target = null;
-
-        //사망 애니메이션
+        playerAnimator.SetTrigger(AnimationVar.onDie.ToString());
     }
 }

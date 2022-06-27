@@ -4,12 +4,14 @@ using UnityEngine.AI;
 
 public class Enemy_Peaceful : MonoBehaviour, IEnemy
 {
-    int enemyId;
+    [SerializeField] int enemyId;
     public int EnemyId { get { return enemyId; } }
-    int maxHp;
+    [SerializeField] int maxHp;
     public int MaxHp { get { return maxHp; } }
     int curHp;
     public int CurHp { get { return curHp; } }
+    [SerializeField] int attackPower;
+    public int AttackPower { get { return attackPower; } }
 
     bool onCombat;
     [SerializeField] Transform target;
@@ -24,14 +26,17 @@ public class Enemy_Peaceful : MonoBehaviour, IEnemy
 
     NavMeshAgent nav;
     Rigidbody rigid;
+    Animator animator;
 
     public enum EnemyType { Peaceful, Normal, Aggressive }
+    enum AnimationVar { isMoving, doAttack, onDie}
     public EnemyType type;
 
     public void Awake()
     {
         rigid = GetComponent<Rigidbody>();
         nav = GetComponent<NavMeshAgent>();
+        animator = GetComponentInChildren<Animator>();
         nav.speed = speed;
         nav.stoppingDistance = stopDistance;
 
@@ -50,32 +55,46 @@ public class Enemy_Peaceful : MonoBehaviour, IEnemy
         Move();
     }
 
-    //타겟이 설정된 경우 navmesh로 추적, 아닐 경우 일정 시간마다 랜덤 이동
     public void Move()
     {
         if (onCombat) return;
-
-        if(target != null)
+        //타겟이 설정된 경우 navmesh로 추적
+        if (target != null)
         {
             nav.SetDestination(target.position);
 
-            if (Vector3.Distance(transform.position, target.position) < nav.stoppingDistance) StartCoroutine(Attack());
+            if (Vector3.Distance(transform.position, target.position) < nav.stoppingDistance) 
+                StartCoroutine(Attack());
+            if(animator.GetBool(AnimationVar.isMoving.ToString()) == false) 
+                animator.SetBool(AnimationVar.isMoving.ToString(), true);
             return;
         }
-
+        //타겟이 없을 경우 일정 시간마다 랜덤 이동
         curMove += Time.deltaTime;
         if(curMove >= ranMovMax)
         {
             nav.SetDestination(transform.position + ranDirs[Random.Range(0, 4)]);
             curMove = 0;
+            if (animator.GetBool(AnimationVar.isMoving.ToString()) == false)
+                animator.SetBool(AnimationVar.isMoving.ToString(), true);
+            return;
         }
+
+        if (animator.GetBool(AnimationVar.isMoving.ToString()) == true)
+            animator.SetBool(AnimationVar.isMoving.ToString(), false);
     }
 
     IEnumerator Attack()
     {
         onCombat = true;
         //공격 애니메이션
+        animator.SetTrigger(AnimationVar.doAttack.ToString());
+
         //플레이어 피격 로직 호출
+        if (target.TryGetComponent<Player>(out Player player) == false)
+            Debug.Log("It's not a player...");
+        else
+            player.OnDamaged(attackPower);
 
         yield return attackTimeOffset;
         onCombat = false;
@@ -102,5 +121,6 @@ public class Enemy_Peaceful : MonoBehaviour, IEnemy
         target = null;
 
         //사망 애니메이션
+        animator.SetTrigger(AnimationVar.onDie.ToString());
     }
 }

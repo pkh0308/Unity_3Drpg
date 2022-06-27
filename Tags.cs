@@ -9,4 +9,5 @@
     public const string ItemSlot = "ItemSlot";
     public const string Entrance = "Entrance";
     public const string StageDoor = "StageDoor";
+    public const string Enemy = "Enemy";
 }

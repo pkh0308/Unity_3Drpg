@@ -13,10 +13,14 @@ public class ObjectManager : MonoBehaviour
     [SerializeField] GameObject misakiPrefab;
     [SerializeField] GameObject yukoPrefab;
 
+    //enemies
+    [SerializeField] GameObject enemyPeacefulPrefab;
+
     GameObject[] mushroom;
     GameObject[] pineTree;
     GameObject[] misaki;
     GameObject[] yuko;
+    GameObject[] enemyPeaceful;
     Npc[] npcDatas;
 
     GameObject[] targetPool;
@@ -34,6 +38,8 @@ public class ObjectManager : MonoBehaviour
         misaki = new GameObject[5];
         yuko = new GameObject[5];
         npcDatas = new Npc[misaki.Length + yuko.Length];
+
+        enemyPeaceful = new GameObject[30];
 
         npcDataDic = new Dictionary<int, string[]>();
         LoadNpcData();
@@ -95,6 +101,13 @@ public class ObjectManager : MonoBehaviour
             npcDatas[npcIdx] = yuko[idx].GetComponent<Npc>();
             npcIdx++;
         }
+        //enemies
+        for (int idx = 0; idx < enemyPeaceful.Length; idx++)
+        {
+            enemyPeaceful[idx] = Instantiate(enemyPeacefulPrefab);
+            enemyPeaceful[idx].SetActive(false);
+            //initialize
+        }
     }
 
     // stageTable.csv 파일을 읽어들여서 해당 스테이지의 오브젝트 배치
@@ -145,6 +158,9 @@ public class ObjectManager : MonoBehaviour
                 targetPool = yuko;
                 isNpc = true;
                 break;
+            case ObjectNames.enemyPeaceful:
+                targetPool = enemyPeaceful;
+                break;
         }
 
         for (int idx = 0; idx < targetPool.Length; idx++)
@@ -184,6 +200,9 @@ public class ObjectManager : MonoBehaviour
             case ObjectNames.yuko:
                 targetPool = yuko;
                 break;
+            case ObjectNames.enemyPeaceful:
+                targetPool = enemyPeaceful;
+                break;
         }
         return targetPool;
     }
@@ -205,6 +224,9 @@ public class ObjectManager : MonoBehaviour
                 break;
             case ObjectNames.yuko:
                 targetPool = yuko;
+                break;
+            case ObjectNames.enemyPeaceful:
+                targetPool = enemyPeaceful;
                 break;
         }
         return targetPool[0];
@@ -229,6 +251,9 @@ public class ObjectManager : MonoBehaviour
                 break;
             case ObjectNames.yuko:
                 targetPool = yuko;
+                break;
+            case ObjectNames.enemyPeaceful:
+                targetPool = enemyPeaceful;
                 break;
         }
 
