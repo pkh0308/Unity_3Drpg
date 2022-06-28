@@ -73,7 +73,7 @@ public class LoadingSceneManager : MonoBehaviour
         {
             yield return seconds;
         }
-        yield return new WaitForSeconds(2.0f); //로딩 화면 체크용 추가 시간, 나중에 삭제할 것
+        yield return new WaitForSeconds(0.5f); //로딩 화면 체크용 추가 시간, 나중에 삭제할 것
         loadingScene.SetActive(false);
         SceneManager.SetActiveScene(SceneManager.GetSceneByBuildIndex(idx));
         ObjectManager.loadObjects(idx);

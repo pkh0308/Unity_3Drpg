@@ -14,6 +14,8 @@ public class Enemy_Peaceful : MonoBehaviour, IEnemy
     public int AttackPower { get { return attackPower; } }
 
     bool onCombat;
+    bool isDie;
+    public bool IsDie { get { return isDie; } }
     [SerializeField] Transform target;
     [SerializeField] float speed;
     [SerializeField] float stopDistance;
@@ -25,16 +27,16 @@ public class Enemy_Peaceful : MonoBehaviour, IEnemy
     WaitForSeconds attackTimeOffset;
 
     NavMeshAgent nav;
-    Rigidbody rigid;
     Animator animator;
+    BoxCollider coll;
 
     public enum EnemyType { Peaceful, Normal, Aggressive }
-    enum AnimationVar { isMoving, doAttack, onDie}
+    enum AnimationVar { isMoving, doAttack, onDamaged, onDie }
     public EnemyType type;
 
-    public void Awake()
+    void Awake()
     {
-        rigid = GetComponent<Rigidbody>();
+        coll = GetComponent<BoxCollider>();
         nav = GetComponent<NavMeshAgent>();
         animator = GetComponentInChildren<Animator>();
         nav.speed = speed;
@@ -42,6 +44,7 @@ public class Enemy_Peaceful : MonoBehaviour, IEnemy
 
         ranDirs = new Vector3[] { Vector3.left, Vector3.right, Vector3.forward, Vector3.back};
         attackTimeOffset = new WaitForSeconds(attackTime);
+        curHp = maxHp;
     }
 
     public void Initialize(int maxHp)
@@ -57,7 +60,7 @@ public class Enemy_Peaceful : MonoBehaviour, IEnemy
 
     public void Move()
     {
-        if (onCombat) return;
+        if (onCombat || isDie) return;
         //타겟이 설정된 경우 navmesh로 추적
         if (target != null)
         {
@@ -105,7 +108,7 @@ public class Enemy_Peaceful : MonoBehaviour, IEnemy
         if(curHp - dmg > 0)
         {
             curHp -= dmg;
-            //피격 애니메이션
+            StartCoroutine(Damaged());
         }
         else
         {
@@ -114,13 +117,30 @@ public class Enemy_Peaceful : MonoBehaviour, IEnemy
         }
     }
 
+    IEnumerator Damaged()
+    {
+        onCombat = true;
+        animator.SetTrigger(AnimationVar.onDamaged.ToString());
+
+        yield return new WaitForSeconds(1.0f);
+        onCombat = false;
+    }
+
     public void OnDie()
     {
         StopAllCoroutines();
+        isDie = true;
+        coll.enabled = false;
         onCombat = false;
         target = null;
+        StartCoroutine(Die());
+    }
 
-        //사망 애니메이션
+    IEnumerator Die()
+    {
         animator.SetTrigger(AnimationVar.onDie.ToString());
+
+        yield return new WaitForSeconds(3.0f);
+        gameObject.SetActive(false);
     }
 }

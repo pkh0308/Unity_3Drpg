@@ -126,6 +126,10 @@ public class Player : MonoBehaviour
                     cursorManger.CursorChange((int)CursorManager.CursorIndexes.ENTRANCE);
                     SetTargetPos(rayHit);
                     break;
+                case Tags.Enemy:
+                    cursorManger.CursorChange((int)CursorManager.CursorIndexes.Enemy);
+                    SetTargetPos(rayHit);
+                    break;
                 default:
                     cursorManger.CursorChange((int)CursorManager.CursorIndexes.DEFAULT);
                     break;
@@ -263,6 +267,8 @@ public class Player : MonoBehaviour
             Debug.Log("It's not a enemy...");
         else
             enemy.OnDamaged(attackPower);
+        target = null;
+        isTargetMoving = false;
 
         yield return attackTimeOffset;
         onCombat = false;
