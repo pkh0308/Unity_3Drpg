@@ -5,4 +5,6 @@
     public const string misaki = "Misaki";
     public const string yuko = "Yuko";
     public const string enemyPeaceful = "EnemyPeaceful";
+    public const string enemyNormal = "EnemyNormal";
+    public const string enemyAggressive = "EnemyAggressive";
 }

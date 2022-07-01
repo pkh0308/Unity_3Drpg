@@ -15,12 +15,16 @@ public class ObjectManager : MonoBehaviour
 
     //enemies
     [SerializeField] GameObject enemyPeacefulPrefab;
+    [SerializeField] GameObject enemyNormalPrefab;
+    [SerializeField] GameObject enemyAggressivePrefab;
 
     GameObject[] mushroom;
     GameObject[] pineTree;
     GameObject[] misaki;
     GameObject[] yuko;
     GameObject[] enemyPeaceful;
+    GameObject[] enemyNormal;
+    GameObject[] enemyAggressive;
     Npc[] npcDatas;
 
     GameObject[] targetPool;
@@ -40,6 +44,8 @@ public class ObjectManager : MonoBehaviour
         npcDatas = new Npc[misaki.Length + yuko.Length];
 
         enemyPeaceful = new GameObject[30];
+        enemyNormal = new GameObject[30];
+        enemyAggressive = new GameObject[30];
 
         npcDataDic = new Dictionary<int, string[]>();
         LoadNpcData();
@@ -108,6 +114,18 @@ public class ObjectManager : MonoBehaviour
             enemyPeaceful[idx].SetActive(false);
             //initialize
         }
+        for (int idx = 0; idx < enemyNormal.Length; idx++)
+        {
+            enemyNormal[idx] = Instantiate(enemyNormalPrefab);
+            enemyNormal[idx].SetActive(false);
+            //initialize
+        }
+        for (int idx = 0; idx < enemyAggressive.Length; idx++)
+        {
+            enemyAggressive[idx] = Instantiate(enemyAggressivePrefab);
+            enemyAggressive[idx].SetActive(false);
+            //initialize
+        }
     }
 
     // stageTable.csv 파일을 읽어들여서 해당 스테이지의 오브젝트 배치
@@ -161,6 +179,12 @@ public class ObjectManager : MonoBehaviour
             case ObjectNames.enemyPeaceful:
                 targetPool = enemyPeaceful;
                 break;
+            case ObjectNames.enemyNormal:
+                targetPool = enemyNormal;
+                break;
+            case ObjectNames.enemyAggressive:
+                targetPool = enemyAggressive;
+                break;
         }
 
         for (int idx = 0; idx < targetPool.Length; idx++)
@@ -203,6 +227,12 @@ public class ObjectManager : MonoBehaviour
             case ObjectNames.enemyPeaceful:
                 targetPool = enemyPeaceful;
                 break;
+            case ObjectNames.enemyNormal:
+                targetPool = enemyNormal;
+                break;
+            case ObjectNames.enemyAggressive:
+                targetPool = enemyAggressive;
+                break;
         }
         return targetPool;
     }
@@ -227,6 +257,12 @@ public class ObjectManager : MonoBehaviour
                 break;
             case ObjectNames.enemyPeaceful:
                 targetPool = enemyPeaceful;
+                break;
+            case ObjectNames.enemyNormal:
+                targetPool = enemyNormal;
+                break;
+            case ObjectNames.enemyAggressive:
+                targetPool = enemyAggressive;
                 break;
         }
         return targetPool[0];
@@ -254,6 +290,12 @@ public class ObjectManager : MonoBehaviour
                 break;
             case ObjectNames.enemyPeaceful:
                 targetPool = enemyPeaceful;
+                break;
+            case ObjectNames.enemyNormal:
+                targetPool = enemyNormal;
+                break;
+            case ObjectNames.enemyAggressive:
+                targetPool = enemyAggressive;
                 break;
         }
 

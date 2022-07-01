@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -6,6 +7,10 @@ using UnityEngine.UI;
 
 public class Player : MonoBehaviour
 {
+    //플레이어 체크용 액션
+    public static Func<Player> getPlayer;
+    Player GetPlayer() { return this; }
+
     float hAxis;
     float vAxis;
     bool wDown;
@@ -28,21 +33,23 @@ public class Player : MonoBehaviour
     public float walkOffset;
     public Transform cameraReference;
 
-    public Animator playerAnimator;
-    public GameManager gameManager;
-    public UiManager uiManager;
-    public CursorManager cursorManger;
+    [SerializeField] Animator playerAnimator;
+    [SerializeField] GameManager gameManager;
+    [SerializeField] UiManager uiManager;
+    [SerializeField] CursorManager cursorManger;
 
     enum AnimationVar { isRunning, isWalking, isCollecting, collectDone, doAttack, onDamaged, onDie }
     enum Axis { Horizontal, Vertical }
 
     //전투 관련
     bool onCombat;
+    bool isDied;
     [SerializeField] int maxHp;
     int curHp;
     [SerializeField] float attackTime;
     [SerializeField] int attackPower;
     WaitForSeconds attackTimeOffset;
+    Coroutine damagedRoutine;
 
     void Awake()
     {
@@ -51,10 +58,13 @@ public class Player : MonoBehaviour
 
         attackTimeOffset = new WaitForSeconds(attackTime);
         curHp = maxHp;
+
+        getPlayer = () => { return GetPlayer(); };
     }
 
     void Update()
     {
+        if (isDied) return;
         InputCheck();
         if (gameManager.Pause) return;
 
@@ -139,7 +149,7 @@ public class Player : MonoBehaviour
 
     void Move()
     {
-        if (isCollecting) return;
+        if (isCollecting || onCombat) return;
 
         moveReference.position = wDown ? speed * walkOffset * new Vector3(hAxis, 0, vAxis).normalized
                                        : speed * new Vector3(hAxis, 0, vAxis).normalized;
@@ -182,9 +192,9 @@ public class Player : MonoBehaviour
     void TargetMove()
     {
         if (onCombat) return;
-        if (!isTargetMoving || isCollecting) return;
+        if (isTargetMoving == false || isCollecting) return;
 
-        if(target == null)
+        if (target == null)
         {
             if (Vector3.Distance(transform.position, targetPos) < 0.01f)
             {
@@ -194,6 +204,9 @@ public class Player : MonoBehaviour
         }
         else
         {
+            if (target.transform.position != targetPos)
+                targetPos = new Vector3(target.transform.position.x, transform.position.y, target.transform.position.z);
+
             if (Vector3.Distance(transform.position, targetPos) < 1.0f)
             {
                 Turn();
@@ -263,7 +276,7 @@ public class Player : MonoBehaviour
         //공격 애니메이션
         playerAnimator.SetTrigger(AnimationVar.doAttack.ToString());
         //적 피격 로직 호출
-        if (target.TryGetComponent<IEnemy>(out IEnemy enemy) == false)
+        if (target.TryGetComponent<Enemy>(out Enemy enemy) == false)
             Debug.Log("It's not a enemy...");
         else
             enemy.OnDamaged(attackPower);
@@ -276,23 +289,38 @@ public class Player : MonoBehaviour
 
     public void OnDamaged(int dmg)
     {
+        if(damagedRoutine != null) StopCoroutine(damagedRoutine);
+
         if (curHp - dmg > 0)
         {
             curHp -= dmg;
-            playerAnimator.SetTrigger(AnimationVar.onDamaged.ToString());
+            damagedRoutine = StartCoroutine(Damaged());
         }
         else
         {
             curHp = 0;
-            OnDie();
+            StopAllCoroutines();
+            StartCoroutine(Die());
         }
     }
 
-    void OnDie()
+    IEnumerator Damaged()
     {
-        StopAllCoroutines();
+        onCombat = true;
+        playerAnimator.SetTrigger(AnimationVar.onDamaged.ToString());
+
+        yield return new WaitForSeconds(1.0f);
         onCombat = false;
+    }
+
+    IEnumerator Die()
+    {
+        onCombat = false;
+        isDied = true;
         target = null;
         playerAnimator.SetTrigger(AnimationVar.onDie.ToString());
+
+        yield return null;
+        Debug.Log("you Died");
     }
 }
