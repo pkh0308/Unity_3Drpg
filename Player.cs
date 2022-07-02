@@ -302,6 +302,7 @@ public class Player : MonoBehaviour
             StopAllCoroutines();
             StartCoroutine(Die());
         }
+        uiManager.StsBar_HpUpdate(curHp, maxHp);
     }
 
     IEnumerator Damaged()

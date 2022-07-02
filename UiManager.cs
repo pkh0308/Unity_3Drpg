@@ -9,7 +9,6 @@ using System.Linq;
 
 public class UiManager : MonoBehaviour
 {
-    [SerializeField] CanvasScaler mainCanvasSacle;
     [SerializeField] ShopManager shopManager;
 
     [SerializeField] GameObject conversationSet;
@@ -18,6 +17,12 @@ public class UiManager : MonoBehaviour
     [SerializeField] GameObject questSet;
     [SerializeField] GameObject convShopSet;
     [SerializeField] TextMeshProUGUI goldText;
+
+    //스테이터스 바
+    [SerializeField] GameObject menuSet;
+    [SerializeField] Image hpBar;
+    [SerializeField] Text hpCount;
+    [SerializeField] GameObject exitSet;
 
     [SerializeField] GameObject itemDescription;
     [SerializeField] TextMeshProUGUI itemNameText;
@@ -234,7 +239,7 @@ public class UiManager : MonoBehaviour
         convQuestSet.SetActive(convQuestSet.activeSelf == false);
     }
 
-    // UI 관련
+    //기타 UI 관련
     public void ControlInventorySet()
     {
         inventorySet.SetActive(inventorySet.activeSelf == false);
@@ -271,6 +276,41 @@ public class UiManager : MonoBehaviour
             }
             progressBarSet.SetActive(false);
         }
+
+    public void StsBar_MenuBtn()
+    {
+        menuSet.SetActive(menuSet.activeSelf == false);
+    }
+
+    public void StsBar_OptionBtn()
+    {
+        //옵션창 구현 후 작성
+    }
+
+    public void StsBar_SaveBtn()
+    {
+        //저장 관련 구현 후 작성
+    }
+
+    public void StsBar_ExitBtn()
+    {
+        exitSet.SetActive(exitSet.activeSelf == false);
+    }
+
+    public void GameExit()
+    {
+#if UNITY_EDITOR
+        UnityEditor.EditorApplication.isPlaying = false;
+#else
+        Application.Quit();
+#endif
+    }
+
+    public void StsBar_HpUpdate(int curHp, int maxHp)
+    {
+        hpCount.text = string.Format("{0:n0}", curHp + " / " + maxHp);
+        hpBar.rectTransform.localScale = new Vector3((float)curHp / maxHp, 1, 1);
+    }
 
     //Esc 입력 시 모든 UI창 비활성화
     //유저 입력으로 열리는 UI창 추가 시 갱신 필요
