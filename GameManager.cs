@@ -266,6 +266,4 @@ public class GameManager : MonoBehaviour
     {
         GoodsManager.Instance.Save();
     }
-
-    //[BurstCompile(CompileSynchronously = true)]
 }

@@ -22,12 +22,15 @@ public class Enemy_Peaceful : Enemy
 
     void Update()
     {
+        if (isDie) return;
         Move();
+        DistanceCheck();
+        UpdateHpBar();
     }
     
-    public void Move()
+    void Move()
     {
-        if (onCombat || isDie) return;
+        if (onCombat || onAttacked) return;
         //일정 시간마다 랜덤 이동
         curMove += Time.deltaTime;
         if (curMove >= ranMovMax)
@@ -39,7 +42,17 @@ public class Enemy_Peaceful : Enemy
             return;
         }
 
-        if (animator.GetBool(AnimationVar.isMoving.ToString()) == true)
+        if (Vector3.Distance(transform.position, nav.destination) <= nav.stoppingDistance)
             animator.SetBool(AnimationVar.isMoving.ToString(), false);
+    }
+
+    void DistanceCheck()
+    {
+        if (target == null) return;
+        if (Vector3.Distance(transform.position, target.position) > searchDistance)
+        {
+            target = null;
+            if (hpBarSet != null) hpBarSet.SetActive(false);
+        }
     }
 }

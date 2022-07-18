@@ -27,39 +27,52 @@ public class Player : MonoBehaviour
     PointerEventData p_data;
 
     [SerializeField] Transform moveReference;
-    Vector3 targetPos;
-    GameObject target;
-    public float speed;
-    public float walkOffset;
-    public Transform cameraReference;
+    public Vector3 targetPos;
+    public GameObject target;
+    [SerializeField] float speed;
+    [SerializeField] float walkOffset;
+    [SerializeField] Transform cameraReference;
 
+    BoxCollider coll;
     [SerializeField] Animator playerAnimator;
     [SerializeField] GameManager gameManager;
     [SerializeField] UiManager uiManager;
     [SerializeField] CursorManager cursorManger;
 
-    enum AnimationVar { isRunning, isWalking, isCollecting, collectDone, doAttack, onDamaged, onDie }
+    enum AnimationVar { isRunning, isWalking, isCollecting, collectDone, doAttack, onDamaged, onDie, onRevive }
     enum Axis { Horizontal, Vertical }
 
     //전투 관련
     bool onCombat;
+    bool onAttacked;
     bool isDied;
+    public bool IsDied { get { return isDied; } }
     [SerializeField] int maxHp;
     int curHp;
+    [SerializeField] int maxSp;
+    int curSp;
     [SerializeField] float attackTime;
     [SerializeField] int attackPower;
     WaitForSeconds attackTimeOffset;
     Coroutine damagedRoutine;
-
+    
     void Awake()
     {
         playerMask = (-1) - (1 << LayerMask.NameToLayer(Tags.Player.ToString()));
         p_data = new PointerEventData(null);
 
+        coll = GetComponent<BoxCollider>();
         attackTimeOffset = new WaitForSeconds(attackTime);
         curHp = maxHp;
+        curSp = maxSp;
 
         getPlayer = () => { return GetPlayer(); };
+    }
+
+    void Start()
+    {
+        uiManager.StsBar_HpUpdate(curHp, maxHp);
+        uiManager.StsBar_SpUpdate(curSp, maxSp);
     }
 
     void Update()
@@ -149,7 +162,7 @@ public class Player : MonoBehaviour
 
     void Move()
     {
-        if (isCollecting || onCombat) return;
+        if (isCollecting || onCombat || onAttacked) return;
 
         moveReference.position = wDown ? speed * walkOffset * new Vector3(hAxis, 0, vAxis).normalized
                                        : speed * new Vector3(hAxis, 0, vAxis).normalized;
@@ -173,6 +186,8 @@ public class Player : MonoBehaviour
     //마우스 이동 시 호출
     void SetTargetPos(Vector3 target)
     {
+        if (onCombat) return;
+
         targetPos = new Vector3(target.x, transform.position.y, target.z);
         isTargetMoving = true;
     }
@@ -219,7 +234,8 @@ public class Player : MonoBehaviour
                         break;
                     case Tags.Collectable:
                         ICollectable collectLogic = target.GetComponent<ICollectable>();
-                        StartCoroutine(CollectItem(collectLogic.SpendTime, collectLogic.ItemId, collectLogic.ItemCount));
+                        if (curSp < collectLogic.SpCount) { Debug.Log("sp is not enough..."); break; }
+                        StartCoroutine(CollectItem(collectLogic.SpendTime, collectLogic.ItemId, collectLogic.ItemCount, collectLogic.SpCount));
                         collectLogic.StartCollect();
                         gameManager.ProgressStart(target.tag, collectLogic.SpendTime);
                         break;
@@ -248,9 +264,11 @@ public class Player : MonoBehaviour
         playerAnimator.SetBool(AnimationVar.isWalking.ToString(), wDown);
     }
 
-    IEnumerator CollectItem(float time, int id, int count)
+    IEnumerator CollectItem(float time, int id, int count, int spCount)
     {
         isCollecting = true;
+        curSp -= spCount;
+        uiManager.StsBar_SpUpdate(curSp, maxSp);
         playerAnimator.SetBool(AnimationVar.isCollecting.ToString(), true);
 
         yield return new WaitForSeconds(time);
@@ -273,15 +291,12 @@ public class Player : MonoBehaviour
     IEnumerator Attack()
     {
         onCombat = true;
-        //공격 애니메이션
         playerAnimator.SetTrigger(AnimationVar.doAttack.ToString());
         //적 피격 로직 호출
         if (target.TryGetComponent<Enemy>(out Enemy enemy) == false)
             Debug.Log("It's not a enemy...");
         else
             enemy.OnDamaged(attackPower);
-        target = null;
-        isTargetMoving = false;
 
         yield return attackTimeOffset;
         onCombat = false;
@@ -307,11 +322,11 @@ public class Player : MonoBehaviour
 
     IEnumerator Damaged()
     {
-        onCombat = true;
-        playerAnimator.SetTrigger(AnimationVar.onDamaged.ToString());
+        onAttacked = true;
+        //playerAnimator.SetTrigger(AnimationVar.onDamaged.ToString());
 
         yield return new WaitForSeconds(1.0f);
-        onCombat = false;
+        onAttacked = false;
     }
 
     IEnumerator Die()
@@ -321,7 +336,31 @@ public class Player : MonoBehaviour
         target = null;
         playerAnimator.SetTrigger(AnimationVar.onDie.ToString());
 
-        yield return null;
-        Debug.Log("you Died");
+        yield return new WaitForSeconds(1.0f);
+        uiManager.SetDeadScreen();
+    }
+
+    public void ReviveAtStartPoint()
+    {
+        isDied = false;
+        LoadingSceneManager.enterStage((int)LoadingSceneManager.SceneIndex.STAGE_1);
+        transform.position = Vector3.zero;
+        curHp = maxHp;
+        curSp = maxSp;
+        uiManager.StsBar_HpUpdate(curHp, maxHp);
+        uiManager.StsBar_SpUpdate(curSp, maxSp);
+        playerAnimator.SetTrigger(AnimationVar.onRevive.ToString());
+        uiManager.SetDeadScreen();
+    }
+
+    public void ReViveNow()
+    {
+        isDied = false;
+        curHp = maxHp / 10;
+        curSp = maxSp / 10;
+        uiManager.StsBar_HpUpdate(curHp, maxHp);
+        uiManager.StsBar_SpUpdate(curSp, maxSp);
+        playerAnimator.SetTrigger(AnimationVar.onRevive.ToString());
+        uiManager.SetDeadScreen();
     }
 }

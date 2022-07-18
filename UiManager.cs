@@ -22,6 +22,8 @@ public class UiManager : MonoBehaviour
     [SerializeField] GameObject menuSet;
     [SerializeField] Image hpBar;
     [SerializeField] Text hpCount;
+    [SerializeField] Image spBar;
+    [SerializeField] Text spCount;
     [SerializeField] GameObject exitSet;
 
     [SerializeField] GameObject itemDescription;
@@ -36,6 +38,7 @@ public class UiManager : MonoBehaviour
     public TextMeshProUGUI progressText;
     public Image progressBar;
 
+    //대화 관련
     [SerializeField] TextMeshProUGUI conv_NpcName;
     [SerializeField] TextMeshProUGUI conv_ConversationText;
     [SerializeField] GameObject conv_ExitBtn;
@@ -53,6 +56,7 @@ public class UiManager : MonoBehaviour
     int conv_Idx;
     string[] currentConversation;
 
+    //퀘스트 관련
     [SerializeField] GameObject noQuestText;
     [SerializeField] QuestPanel[] questPanels;
     [SerializeField] GameObject[] questOnGoingPanels;
@@ -67,6 +71,9 @@ public class UiManager : MonoBehaviour
     [SerializeField] TextMeshProUGUI questInfoDescripionText;
     [SerializeField] TextMeshProUGUI questCountText;
     QuestData curQuestData;
+
+    //전투 관련
+    [SerializeField] GameObject deadSet;
 
     Dictionary<int, ItemData> itemDic;
     public static Action itemDescOff;
@@ -312,6 +319,12 @@ public class UiManager : MonoBehaviour
         hpBar.rectTransform.localScale = new Vector3((float)curHp / maxHp, 1, 1);
     }
 
+    public void StsBar_SpUpdate(int curSp, int maxSp)
+    {
+        spCount.text = string.Format("{0:n0}", curSp + " / " + maxSp);
+        spBar.rectTransform.localScale = new Vector3((float)curSp / maxSp, 1, 1);
+    }
+
     //Esc 입력 시 모든 UI창 비활성화
     //유저 입력으로 열리는 UI창 추가 시 갱신 필요
     public void CloseWindows()
@@ -498,5 +511,11 @@ public class UiManager : MonoBehaviour
         if (questInfoSet.activeSelf == false) return;
 
         questCountText.text = itemDic[curQuestData.targetId].itemName + " " + curQuestData.CurCount + "/" + curQuestData.maxCount;
+    }
+
+    //사망 시 호출
+    public void SetDeadScreen()
+    {
+        deadSet.SetActive(deadSet.activeSelf == false);
     }
 }

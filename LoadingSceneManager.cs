@@ -56,6 +56,8 @@ public class LoadingSceneManager : MonoBehaviour
 
     public void EnterStage(int stageIdx)
     {
+        if (stageIdx == curIdx) return;
+
         loadingScene.SetActive(true);
         SceneManager.UnloadSceneAsync(curIdx);
         StartCoroutine(Loading(stageIdx));

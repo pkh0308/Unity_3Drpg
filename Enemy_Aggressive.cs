@@ -6,7 +6,6 @@ using UnityEngine.AI;
 public class Enemy_Aggressive : Enemy
 {
     int playerMask;
-    [SerializeField] float searchDistance;
 
     void Awake()
     {
@@ -21,18 +20,20 @@ public class Enemy_Aggressive : Enemy
         curHp = maxHp;
 
         type = EnemyType.Aggressive;
-        playerMask = (1 << LayerMask.NameToLayer(Tags.Player.ToString()));
+        playerMask = (1 << LayerMask.NameToLayer(Tags.Player.ToString())); //OverlapSphere()용 마스크, player 레이어만 탐색
     }
 
     void Update()
     {
+        if (isDie) return;
         Move();
         DistanceCheck();
+        UpdateHpBar();
     }
 
     void Move()
     {
-        if (onCombat || isDie) return;
+        if (onCombat || onAttacked) return;
         //타겟이 설정된 경우 navmesh로 추적
         if (target != null)
         {
@@ -54,16 +55,27 @@ public class Enemy_Aggressive : Enemy
             return;
         }
 
-        if (animator.GetBool(AnimationVar.isMoving.ToString()) == true)
+        if (Vector3.Distance(transform.position, nav.destination) <= nav.stoppingDistance)
             animator.SetBool(AnimationVar.isMoving.ToString(), false);
     }
 
     void DistanceCheck()
     {
-        Collider[] colls = Physics.OverlapSphere(transform.position, searchDistance, playerMask);
-        if (colls.Length > 0)
-            target = colls[0].gameObject.transform;
-        else
+        if (playerDie) return;
+        //타겟이 미설정된 경우 OverlapSphere()로 플레이어 탐지
+        if (target == null)
+        {
+            Collider[] colls = Physics.OverlapSphere(transform.position, searchDistance, playerMask);
+            if (colls.Length > 0)
+                target = colls[0].gameObject.transform;
+            return;
+        }
+        // 타겟이 설정된 경우 타겟과의 거리 측정
+        if (Vector3.Distance(transform.position, target.position) > searchDistance)
+        {
             target = null;
+            if (hpBarSet != null) hpBarSet.SetActive(false);
+        }
+            
     }
 }

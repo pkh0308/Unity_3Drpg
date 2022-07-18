@@ -5,8 +5,6 @@ using UnityEngine.AI;
 //타겟이 searchDistance보다 멀어질 경우 타겟 해제
 public class Enemy_Normal : Enemy
 {
-    [SerializeField] float searchDistance;
-
     void Awake()
     {
         coll = GetComponent<BoxCollider>();
@@ -24,13 +22,15 @@ public class Enemy_Normal : Enemy
 
     void Update()
     {
+        if (isDie) return;
         Move();
         DistanceCheck();
+        UpdateHpBar();
     }
 
     void Move()
     {
-        if (onCombat || isDie) return;
+        if (onCombat || onAttacked) return;
         //타겟이 설정된 경우 navmesh로 추적
         if (target != null)
         {
@@ -53,14 +53,17 @@ public class Enemy_Normal : Enemy
             return;
         }
 
-        //if (animator.GetBool(AnimationVar.isMoving.ToString()) == true)
+        if (Vector3.Distance(transform.position, nav.destination) <= nav.stoppingDistance)
             animator.SetBool(AnimationVar.isMoving.ToString(), false);
     }
 
     void DistanceCheck()
     {
-        if (target == null) return;
+        if (target == null || playerDie) return;
         if (Vector3.Distance(transform.position, target.position) > searchDistance)
+        {
             target = null;
+            if (hpBarSet != null) hpBarSet.SetActive(false);
+        }
     }
 }

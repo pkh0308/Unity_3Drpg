@@ -5,6 +5,9 @@ using UnityEngine;
 
 public class ObjectManager : MonoBehaviour
 {
+    public static Func<string, GameObject> makeObj;
+    public static Action<int> loadObjects;
+
     // Objects
     [SerializeField] GameObject mushroomPrefab;
     [SerializeField] GameObject pineTreePrefab;
@@ -18,6 +21,10 @@ public class ObjectManager : MonoBehaviour
     [SerializeField] GameObject enemyNormalPrefab;
     [SerializeField] GameObject enemyAggressivePrefab;
 
+    //UI
+    [SerializeField] GameObject hpBarPrefab;
+    [SerializeField] Canvas minorCanvas;
+
     GameObject[] mushroom;
     GameObject[] pineTree;
     GameObject[] misaki;
@@ -25,15 +32,15 @@ public class ObjectManager : MonoBehaviour
     GameObject[] enemyPeaceful;
     GameObject[] enemyNormal;
     GameObject[] enemyAggressive;
+    GameObject[] hpBar;
     Npc[] npcDatas;
 
     GameObject[] targetPool;
     Dictionary<int, string[]> npcDataDic;
 
-    public static Action<int> loadObjects;
-
     void Awake()
     {
+        makeObj = (a) => { return MakeObj(a); };
         loadObjects = (a) => { Generate(); LoadObjects(a); };
 
         mushroom = new GameObject[30];
@@ -46,6 +53,8 @@ public class ObjectManager : MonoBehaviour
         enemyPeaceful = new GameObject[30];
         enemyNormal = new GameObject[30];
         enemyAggressive = new GameObject[30];
+
+        hpBar = new GameObject[30];
 
         npcDataDic = new Dictionary<int, string[]>();
         LoadNpcData();
@@ -91,6 +100,7 @@ public class ObjectManager : MonoBehaviour
             pineTree[idx] = Instantiate(pineTreePrefab);
             pineTree[idx].SetActive(false);
         }
+
         //npcs
         int npcIdx = 0;
         for (int idx = 0; idx < misaki.Length; idx++)
@@ -107,6 +117,7 @@ public class ObjectManager : MonoBehaviour
             npcDatas[npcIdx] = yuko[idx].GetComponent<Npc>();
             npcIdx++;
         }
+
         //enemies
         for (int idx = 0; idx < enemyPeaceful.Length; idx++)
         {
@@ -125,6 +136,13 @@ public class ObjectManager : MonoBehaviour
             enemyAggressive[idx] = Instantiate(enemyAggressivePrefab);
             enemyAggressive[idx].SetActive(false);
             //initialize
+        }
+
+        //UI
+        for (int idx = 0; idx < hpBar.Length; idx++)
+        {
+            hpBar[idx] = Instantiate(hpBarPrefab, minorCanvas.transform);
+            hpBar[idx].SetActive(false);
         }
     }
 
@@ -185,6 +203,9 @@ public class ObjectManager : MonoBehaviour
             case ObjectNames.enemyAggressive:
                 targetPool = enemyAggressive;
                 break;
+            case ObjectNames.hpBar:
+                targetPool = hpBar;
+                break;
         }
 
         for (int idx = 0; idx < targetPool.Length; idx++)
@@ -233,6 +254,9 @@ public class ObjectManager : MonoBehaviour
             case ObjectNames.enemyAggressive:
                 targetPool = enemyAggressive;
                 break;
+            case ObjectNames.hpBar:
+                targetPool = hpBar;
+                break;
         }
         return targetPool;
     }
@@ -263,6 +287,9 @@ public class ObjectManager : MonoBehaviour
                 break;
             case ObjectNames.enemyAggressive:
                 targetPool = enemyAggressive;
+                break;
+            case ObjectNames.hpBar:
+                targetPool = hpBar;
                 break;
         }
         return targetPool[0];
@@ -297,6 +324,9 @@ public class ObjectManager : MonoBehaviour
             case ObjectNames.enemyAggressive:
                 targetPool = enemyAggressive;
                 break;
+            case ObjectNames.hpBar:
+                targetPool = hpBar;
+                break;
         }
 
         for (int idx = 0; idx < targetPool.Length; idx++)
@@ -307,5 +337,12 @@ public class ObjectManager : MonoBehaviour
             }
         }
         return count;
+    }
+
+    //마우스로 카메라 회전 시 UI도 회전시키기 위한 함수
+    //HpBar 외에 추가로 회전시켜야 할 UI가 생길 경우 갱신 요망
+    public void RotateUi()
+    {
+
     }
 }
