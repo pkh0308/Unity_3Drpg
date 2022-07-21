@@ -33,7 +33,7 @@ public class ItemSlot : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDrag
             return;
         }
 
-        itemImg.sprite = Resources.Load<Sprite>("item" + id);
+        itemImg.sprite = ImgContainer.getItemImg(id);
         itemImg.gameObject.SetActive(true);
         
         if (itemCount > 1)

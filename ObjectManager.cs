@@ -338,11 +338,4 @@ public class ObjectManager : MonoBehaviour
         }
         return count;
     }
-
-    //마우스로 카메라 회전 시 UI도 회전시키기 위한 함수
-    //HpBar 외에 추가로 회전시켜야 할 UI가 생길 경우 갱신 요망
-    public void RotateUi()
-    {
-
-    }
 }

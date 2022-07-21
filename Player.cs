@@ -33,7 +33,6 @@ public class Player : MonoBehaviour
     [SerializeField] float walkOffset;
     [SerializeField] Transform cameraReference;
 
-    BoxCollider coll;
     [SerializeField] Animator playerAnimator;
     [SerializeField] GameManager gameManager;
     [SerializeField] UiManager uiManager;
@@ -48,9 +47,19 @@ public class Player : MonoBehaviour
     bool isDied;
     public bool IsDied { get { return isDied; } }
     [SerializeField] int maxHp;
+    public int MaxHp { get { return maxHp; } }
     int curHp;
+    public int CurHp { get { return curHp; } }
+    [SerializeField] int hpRecovery;
+    [SerializeField] float hpRecoverySeconds;
+    WaitForSeconds hpSeconds;
     [SerializeField] int maxSp;
+    public int MaxSp { get { return maxSp; } }
     int curSp;
+    public int CurSp { get { return curSp; } }
+    [SerializeField] int spRecovery;
+    [SerializeField] float spRecoverySeconds;
+    WaitForSeconds spSeconds;
     [SerializeField] float attackTime;
     [SerializeField] int attackPower;
     WaitForSeconds attackTimeOffset;
@@ -61,10 +70,11 @@ public class Player : MonoBehaviour
         playerMask = (-1) - (1 << LayerMask.NameToLayer(Tags.Player.ToString()));
         p_data = new PointerEventData(null);
 
-        coll = GetComponent<BoxCollider>();
         attackTimeOffset = new WaitForSeconds(attackTime);
         curHp = maxHp;
         curSp = maxSp;
+        hpSeconds = new WaitForSeconds(hpRecoverySeconds);
+        spSeconds = new WaitForSeconds(spRecoverySeconds);
 
         getPlayer = () => { return GetPlayer(); };
     }
@@ -72,7 +82,7 @@ public class Player : MonoBehaviour
     void Start()
     {
         uiManager.StsBar_HpUpdate(curHp, maxHp);
-        uiManager.StsBar_SpUpdate(curSp, maxSp);
+        uiManager.StsBar_SpUpdate(curSp, maxSp);//GoodsManager.Instance.GetGold(10000);
     }
 
     void Update()
@@ -98,7 +108,7 @@ public class Player : MonoBehaviour
         vAxis = Input.GetAxisRaw(Axis.Vertical.ToString());
         wDown = Input.GetKey(KeyCode.LeftShift);
 
-        //마우스 이동 관련 인풋
+        //마우스 인풋
         mouseLeft = Input.GetMouseButton(0);
         mouseLeftDown = Input.GetMouseButtonDown(0);
         isOverUi = EventSystem.current.IsPointerOverGameObject();
@@ -115,7 +125,10 @@ public class Player : MonoBehaviour
             if (list.Count > 0)
             {
                 if (list[0].gameObject.TryGetComponent(out ItemSlot slot))
+                {
                     uiManager.ItemDescOn(slot.ItemId);
+                    if (Input.GetMouseButtonUp(1)) gameManager.UseItem(slot.ItemId);
+                }
                 else if (list[0].gameObject.TryGetComponent(out ShopItem shop))
                     if(shop.Data != null) 
                         uiManager.ShopDescOn(shop.Data.itemId);
@@ -234,7 +247,11 @@ public class Player : MonoBehaviour
                         break;
                     case Tags.Collectable:
                         ICollectable collectLogic = target.GetComponent<ICollectable>();
-                        if (curSp < collectLogic.SpCount) { Debug.Log("sp is not enough..."); break; }
+                        if (curSp < collectLogic.SpCount) 
+                        { 
+                            uiManager.MidNotice(UiManager.NoticeType.NotEnoughSp); 
+                            break; 
+                        }
                         StartCoroutine(CollectItem(collectLogic.SpendTime, collectLogic.ItemId, collectLogic.ItemCount, collectLogic.SpCount));
                         collectLogic.StartCollect();
                         gameManager.ProgressStart(target.tag, collectLogic.SpendTime);
@@ -267,8 +284,11 @@ public class Player : MonoBehaviour
     IEnumerator CollectItem(float time, int id, int count, int spCount)
     {
         isCollecting = true;
-        curSp -= spCount;
-        uiManager.StsBar_SpUpdate(curSp, maxSp);
+        bool wasMaxSp = (curSp == maxSp);
+        UpdateSp(spCount, false);
+        //갱신 전에 Sp가 가득 찬 상태였다면 회복 코루틴 시작
+        if (wasMaxSp) StartCoroutine(SpRecovery());
+
         playerAnimator.SetBool(AnimationVar.isCollecting.ToString(), true);
 
         yield return new WaitForSeconds(time);
@@ -305,19 +325,17 @@ public class Player : MonoBehaviour
     public void OnDamaged(int dmg)
     {
         if(damagedRoutine != null) StopCoroutine(damagedRoutine);
+        bool wasMaxHp = (curHp == maxHp); 
 
-        if (curHp - dmg > 0)
-        {
-            curHp -= dmg;
+        if (UpdateHp(dmg, false) > 0)
             damagedRoutine = StartCoroutine(Damaged());
-        }
         else
         {
-            curHp = 0;
             StopAllCoroutines();
             StartCoroutine(Die());
         }
-        uiManager.StsBar_HpUpdate(curHp, maxHp);
+        //갱신 전에 Hp가 가득 찬 상태였다면 회복 코루틴 시작
+        if (wasMaxHp) StartCoroutine(HpRecovery()); 
     }
 
     IEnumerator Damaged()
@@ -362,5 +380,54 @@ public class Player : MonoBehaviour
         uiManager.StsBar_SpUpdate(curSp, maxSp);
         playerAnimator.SetTrigger(AnimationVar.onRevive.ToString());
         uiManager.SetDeadScreen();
+    }
+
+    //Hp 및 Sp 갱신용 함수, 감소하는 경우에는 2번째 인자로 false 입력
+    public int UpdateHp(int val, bool isPlus = true)
+    {
+        if (isPlus == false) val = -val; 
+
+        if (curHp + val <= 0)
+            curHp = 0;
+        else if(curHp + val > maxHp)
+            curHp = maxHp;
+        else
+            curHp += val;
+
+        uiManager.StsBar_HpUpdate(curHp, maxHp);
+        return curHp;
+    }
+
+    public int UpdateSp(int val, bool isPlus = true)
+    {
+        if (isPlus == false) val = -val;
+
+        if (curSp + val <= 0)
+            curSp = 0;
+        else if (curSp + val > maxSp)
+            curSp = maxSp;
+        else
+            curSp += val;
+
+        uiManager.StsBar_SpUpdate(curSp, maxSp);
+        return curSp;
+    }
+    
+    IEnumerator HpRecovery()
+    {
+        while(curHp < maxHp)
+        {
+            yield return hpSeconds;
+            UpdateHp(hpRecovery);
+        }
+    }
+
+    IEnumerator SpRecovery()
+    {
+        while (curSp < maxSp)
+        {
+            yield return spSeconds;
+            UpdateSp(spRecovery);
+        }
     }
 }

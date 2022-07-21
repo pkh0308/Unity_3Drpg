@@ -220,6 +220,7 @@ public class GameManager : MonoBehaviour
         invenDic[id] += count;
     }
 
+    //단순 소모(퀘스트 완료 시, 기타 등등)
     public void SpendItem(int id, int count)
     {
         if (invenSlots[Array.IndexOf(invenArr, id)].SpendItem(count) == false)
@@ -228,6 +229,25 @@ public class GameManager : MonoBehaviour
             return;
         }
         invenDic[id] -= count;
+        if (invenDic[id] == 0)
+            invenArr[GetItemSlotIdx(id)] = 0;
+    }
+
+    //소모품 아이템 사용(인벤토리에서 사용)
+    public void UseItem(int id)
+    {
+        ItemData data = uiManager.GetItemData(id);
+        if (data == null) return;
+        if (data.spendable == false) return;
+        if (ItemManager.useItem(id) == false) return;
+
+        if (invenSlots[Array.IndexOf(invenArr, id)].SpendItem(1) == false)
+        {
+            Debug.Log("SpendItem Failed...");
+            return;
+        }
+        
+        invenDic[id]--;
         if (invenDic[id] == 0)
             invenArr[GetItemSlotIdx(id)] = 0;
     }

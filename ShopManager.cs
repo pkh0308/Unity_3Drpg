@@ -143,7 +143,6 @@ public class ShopManager : MonoBehaviour
             return;
         }
 
-        // 한개 구매로 테스트, 추후 다중구매 추가 구현
         gameManager.GetItem(curItemData.itemId, curCount);
         purchaseSet.SetActive(false);
     }

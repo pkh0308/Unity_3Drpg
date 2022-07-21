@@ -72,6 +72,13 @@ public class UiManager : MonoBehaviour
     [SerializeField] TextMeshProUGUI questCountText;
     QuestData curQuestData;
 
+    //알림 텍스트 관련
+    [SerializeField] TextMeshProUGUI midNoticeText;
+    [SerializeField] float noticeSeconds;
+    WaitForSeconds noticeSecs;
+    Coroutine noticeCor;
+    public enum NoticeType { NotEnoughSp = 0 }
+
     //전투 관련
     [SerializeField] GameObject deadSet;
 
@@ -85,6 +92,7 @@ public class UiManager : MonoBehaviour
     {
         descRect = itemDescription.GetComponent<RectTransform>();
         descSize = descRect.sizeDelta * 0.8f;
+        noticeSecs = new WaitForSeconds(noticeSeconds);
 
         itemDescOff = () => { ItemDescOff(); };
         questDescSet = (a) => { SetQuestDesc(a); };
@@ -112,8 +120,8 @@ public class UiManager : MonoBehaviour
             {
                 string[] datas = line.Split('@');
                 int id = int.Parse(datas[0]);
-                //0 : id, 1 : name, 2 : description, 3 : price for purchase, 4 : price for sell
-                ItemData item = new ItemData(id, datas[1], datas[2], int.Parse(datas[3]), int.Parse(datas[4]));
+                //0 : id, 1 : name, 2 : description, 3 : price for purchase, 4 : price for sell, 5 : spendable
+                ItemData item = new ItemData(id, datas[1], datas[2], int.Parse(datas[3]), int.Parse(datas[4]), bool.Parse(datas[5]));
                 itemDic.Add(id, item);
 
                 line = itemReader.ReadLine();
@@ -177,6 +185,7 @@ public class UiManager : MonoBehaviour
 
     public void Conv_ShopBtn()
     {
+        convQuestSet.SetActive(false);
         convShopSet.SetActive(convShopSet.activeSelf == false);
     }
 
@@ -243,6 +252,7 @@ public class UiManager : MonoBehaviour
 
     public void Conv_QuestOpenBtn()
     {
+        convShopSet.SetActive(false);
         convQuestSet.SetActive(convQuestSet.activeSelf == false);
     }
 
@@ -323,6 +333,33 @@ public class UiManager : MonoBehaviour
     {
         spCount.text = string.Format("{0:n0}", curSp + " / " + maxSp);
         spBar.rectTransform.localScale = new Vector3((float)curSp / maxSp, 1, 1);
+    }
+
+    public void MidNotice(NoticeType type)
+    {
+        if (noticeCor != null)
+        {
+            StopCoroutine(noticeCor);
+            midNoticeText.gameObject.SetActive(false);
+        }
+
+        string s = "";
+        switch(type)
+        {
+            case NoticeType.NotEnoughSp:
+                s = "스태미나가 부족합니다.";
+                break;
+        }
+        noticeCor = StartCoroutine(Notice(s));
+    }
+
+    IEnumerator Notice(string s)
+    {
+        midNoticeText.text = s;
+        midNoticeText.gameObject.SetActive(true);
+
+        yield return noticeSecs;
+        midNoticeText.gameObject.SetActive(false);
     }
 
     //Esc 입력 시 모든 UI창 비활성화
