@@ -7,7 +7,7 @@ using UnityEngine.UI;
 
 public class Player : MonoBehaviour
 {
-    //플레이어 체크용 액션
+    //플레이어 체크용
     public static Func<Player> getPlayer;
     Player GetPlayer() { return this; }
 
@@ -40,6 +40,9 @@ public class Player : MonoBehaviour
 
     enum AnimationVar { isRunning, isWalking, isCollecting, collectDone, doAttack, onDamaged, onDie, onRevive }
     enum Axis { Horizontal, Vertical }
+
+    public bool onUi;
+    public bool OnUi { get { return onUi; } }
 
     //전투 관련
     bool onCombat;
@@ -118,25 +121,31 @@ public class Player : MonoBehaviour
         //인벤토리나 상점일 경우 아이템 디스크립션 노출
         if (isOverUi)
         {
+            onUi = true;
+
             p_data.position = Input.mousePosition;
             List<RaycastResult> list = new List<RaycastResult>();
             uiRaycaster.Raycast(p_data, list);
 
-            if (list.Count > 0)
+            for (int i = 0; i < list.Count; i++)
             {
-                if (list[0].gameObject.TryGetComponent(out ItemSlot slot))
+                if (list[i].gameObject.CompareTag(Tags.UI) == false)
+                    continue;
+
+                if (list[i].gameObject.TryGetComponent(out ItemSlot slot))
                 {
                     uiManager.ItemDescOn(slot.ItemId);
                     if (Input.GetMouseButtonUp(1)) gameManager.UseItem(slot.ItemId);
                 }
-                else if (list[0].gameObject.TryGetComponent(out ShopItem shop))
-                    if(shop.Data != null) 
+                else if (list[i].gameObject.TryGetComponent(out ShopItem shop))
+                    if (shop.Data != null)
                         uiManager.ShopDescOn(shop.Data.itemId);
             }
             return;
         }
         uiManager.ItemDescOff();
         uiManager.ShopDescOff();
+        onUi = false;
 
         //마우스가 UI 위에 있지 않을 경우
         //Raycast로 플레이어를 제외한 타겟을 검출하고 타겟쪽으로 이동 및 커서 변경, 타겟에 따라 추가 행동(대화, 채집 등)
@@ -349,9 +358,11 @@ public class Player : MonoBehaviour
 
     IEnumerator Die()
     {
+        cursorManger.CursorChange((int)CursorManager.CursorIndexes.DEFAULT);
         onCombat = false;
         isDied = true;
         target = null;
+        isTargetMoving = false;
         playerAnimator.SetTrigger(AnimationVar.onDie.ToString());
 
         yield return new WaitForSeconds(1.0f);

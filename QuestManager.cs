@@ -52,7 +52,7 @@ public class QuestManager
 
                 for (int i = 0; i < rewards.Length; i += 2)
                     qd.AddToRewardList(new int[] { int.Parse(rewards[i]), int.Parse(rewards[i + 1]) });
-                for (int i = 0; i < rewards.Length; i++)
+                for (int i = 0; i < convIds.Length; i++)
                     qd.AddToConvList(int.Parse(convIds[i]));
 
                     line = questReader.ReadLine();
@@ -120,8 +120,19 @@ public class QuestManager
         if (needUpdate) UiManager.updateQuestPanel();
     }
 
-    public void UpdateKillQuest(int monsterId)
+    public void UpdateKillQuest(int enemyId)
     {
+        bool needUpdate = false;
+        List<int> list = playerQuestDic.Keys.ToList();
+        for (int i = 0; i < list.Count; i++)
+        {
+            QuestData data = playerQuestDic[list[i]];
+            if (data.type != QuestData.QuestType.Kill) continue;
+            if (data.targetId != enemyId) continue;
 
+            data.QuestCountUp(1);
+            if (data.QuestStatus == (int)QuestData.QuestStatusType.FullFill) needUpdate = true;
+        }
+        if (needUpdate) UiManager.updateQuestPanel();
     }
 }

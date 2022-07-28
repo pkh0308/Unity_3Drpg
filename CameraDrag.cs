@@ -9,13 +9,20 @@ public class CameraDrag : MonoBehaviour
     public float rotationSpeed;
 
     public CursorManager cursorManager;
+    Player player;
 
     bool lDown;
     bool rDown;
     bool isDraging;
 
+    void Awake()
+    {
+        player = Player.getPlayer();
+    }
+
     void Update()
     {
+        if (player.OnUi) return;
         InputCheck();
         BeginDrag();
     }

@@ -88,6 +88,8 @@ public class UiManager : MonoBehaviour
     public static Action updateQuestPanel;
     public static Action updateGold;
 
+    Dictionary<int, EnemyData> enemyDic;
+
     void Awake()
     {
         descRect = itemDescription.GetComponent<RectTransform>();
@@ -100,6 +102,7 @@ public class UiManager : MonoBehaviour
         updateGold = () => { UpdateGold(); };
 
         itemDic = new Dictionary<int, ItemData>();
+        enemyDic = new Dictionary<int, EnemyData>();
         UpdateGold();
         Initialize();
     }
@@ -130,6 +133,30 @@ public class UiManager : MonoBehaviour
         }
         itemReader.Close();
 
+        //몬스터 정보 저장
+        TextAsset enemyList = Resources.Load("enemyDictionary") as TextAsset;
+        StringReader enemyReader = new StringReader(enemyList.text);
+
+        while (enemyReader != null)
+        {
+            string line = enemyReader.ReadLine();
+            if (line == null) break;
+
+            line = enemyReader.ReadLine();
+            while (line.Length > 1)
+            {
+                string[] datas = line.Split('@');
+                int id = int.Parse(datas[0]);
+                //0 : id, 1 : name, 2 : maxHp, 3 : description
+                EnemyData enemy = new EnemyData(id, datas[1], int.Parse(datas[2]), datas[3]);
+                enemyDic.Add(id, enemy);
+
+                line = enemyReader.ReadLine();
+                if (line == null) break;
+            }
+        }
+        enemyReader.Close();
+
         // 퀘스트 판넬 업데이트
         UpdateQuestPanels();
     }
@@ -145,6 +172,7 @@ public class UiManager : MonoBehaviour
             convShopSet.SetActive(false);
             conv_AccpetBtn.SetActive(false);
             conv_ClearBtn.SetActive(false);
+            conv_ShopBtn.SetActive(false);
         }
     }
 
@@ -538,7 +566,15 @@ public class UiManager : MonoBehaviour
         {
             questInfoNameText.text = data.questName;
             questInfoDescripionText.text = " " + data.questDescription;
-            questCountText.text = itemDic[data.targetId].itemName + " " + data.CurCount + "/" + data.maxCount;
+            switch (data.type)
+            {
+                case QuestData.QuestType.Collect:
+                    questCountText.text = itemDic[data.targetId].itemName + " " + data.CurCount + "/" + data.maxCount;
+                    break;
+                case QuestData.QuestType.Kill:
+                    questCountText.text = enemyDic[data.targetId].enemyName + " " + data.CurCount + "/" + data.maxCount;
+                    break;
+            }
             questInfoSet.SetActive(true);
         }
     }

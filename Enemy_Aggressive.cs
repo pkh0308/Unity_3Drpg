@@ -61,7 +61,8 @@ public class Enemy_Aggressive : Enemy
 
     void DistanceCheck()
     {
-        if (playerDie) return;
+        if (player != null && player.IsDied) return;
+
         //타겟이 미설정된 경우 OverlapSphere()로 플레이어 탐지
         if (target == null)
         {
@@ -74,6 +75,7 @@ public class Enemy_Aggressive : Enemy
         if (Vector3.Distance(transform.position, target.position) > searchDistance)
         {
             target = null;
+            player = null;
             if (hpBarSet != null) hpBarSet.SetActive(false);
         }
             

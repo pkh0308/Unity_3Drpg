@@ -30,7 +30,8 @@ public class Enemy_Normal : Enemy
 
     void Move()
     {
-        if (onCombat || onAttacked) return;
+        if (onCombat) return;
+
         //타겟이 설정된 경우 navmesh로 추적
         if (target != null)
         {
@@ -38,7 +39,7 @@ public class Enemy_Normal : Enemy
 
             if (Vector3.Distance(transform.position, target.position) < nav.stoppingDistance)
                 StartCoroutine(Attack());
-            //if (animator.GetBool(AnimationVar.isMoving.ToString()) == false)
+            else
                 animator.SetBool(AnimationVar.isMoving.ToString(), true);
             return;
         }
@@ -48,8 +49,7 @@ public class Enemy_Normal : Enemy
         {
             nav.SetDestination(transform.position + ranDirs[Random.Range(0, 4)]);
             curMove = 0;
-            //if (animator.GetBool(AnimationVar.isMoving.ToString()) == false)
-                animator.SetBool(AnimationVar.isMoving.ToString(), true);
+            animator.SetBool(AnimationVar.isMoving.ToString(), true);
             return;
         }
 
@@ -59,10 +59,13 @@ public class Enemy_Normal : Enemy
 
     void DistanceCheck()
     {
-        if (target == null || playerDie) return;
+        if (target == null) return;
+        if (player != null && player.IsDied) return;
+
         if (Vector3.Distance(transform.position, target.position) > searchDistance)
         {
             target = null;
+            player = null;
             if (hpBarSet != null) hpBarSet.SetActive(false);
         }
     }

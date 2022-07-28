@@ -14,6 +14,8 @@ public class CursorManager : MonoBehaviour
         currentIdx = 0;
     }
 
+    //idx에 따라 커서 스프라이트 변경
+    //회전중인 경우, ROTATEEND 외 값 무시
     public void CursorChange(int idx)
     {
         if (currentIdx == idx) return;

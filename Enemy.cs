@@ -20,7 +20,6 @@ public class Enemy : MonoBehaviour
     protected bool onCombat;
     protected bool onAttacked;
     protected bool isDie;
-    protected bool playerDie;
     public bool IsDie { get { return isDie; } }
 
     protected GameObject hpBarSet;
@@ -28,6 +27,7 @@ public class Enemy : MonoBehaviour
     [SerializeField] protected Vector3 hpBarOffset;
 
     protected Transform target;
+    protected Player player;
     [SerializeField] protected float speed;
     [SerializeField] protected float stopDistance;
     [SerializeField] protected float ranMovMax;
@@ -35,6 +35,7 @@ public class Enemy : MonoBehaviour
     protected Vector3[] ranDirs;
     [SerializeField] protected float ranMoveOffset;
     [SerializeField] protected float searchDistance;
+    [SerializeField] protected float disappearTime;
 
     protected NavMeshAgent nav;
     protected Animator animator;
@@ -53,20 +54,21 @@ public class Enemy : MonoBehaviour
         animator.SetTrigger(AnimationVar.doAttack.ToString());
 
         //플레이어 피격 로직 호출
-        if (target.TryGetComponent<Player>(out Player player) == false)
+        if (target.TryGetComponent<Player>(out Player p) == false)
         {
             Debug.Log("It's not a player...");
             yield break;
         }
+        player = p;
+        player.OnDamaged(attackPower);
         if (player.IsDied)
         {
-            playerDie = true;
             target = null;
             onCombat = false;
+            onAttacked = false;
+            hpBarSet.SetActive(false);
             yield break;
         }
-        player.OnDamaged(attackPower);
-
         yield return attackTimeOffset;
         onCombat = false;
     }
@@ -80,13 +82,13 @@ public class Enemy : MonoBehaviour
         {
             curHp -= dmg;
             StartCoroutine(Damaged());
+            SetHpBar();
         }
         else
         {
             curHp = 0;
             OnDie();
         }
-        SetHpBar();
     }
 
     protected IEnumerator Damaged()
@@ -129,6 +131,9 @@ public class Enemy : MonoBehaviour
         onCombat = false;
         onAttacked = false;
         target = null;
+        hpBarSet.SetActive(false);
+        QuestManager.Instance.UpdateKillQuest(enemyId);
+
         StartCoroutine(Die());
     }
 
@@ -136,8 +141,7 @@ public class Enemy : MonoBehaviour
     {
         animator.SetTrigger(AnimationVar.onDie.ToString());
 
-        yield return new WaitForSeconds(3.0f);
-        hpBarSet.SetActive(false);
+        yield return new WaitForSeconds(disappearTime);
         gameObject.SetActive(false);
     }
 }
