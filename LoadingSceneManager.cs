@@ -5,7 +5,6 @@ using UnityEngine.SceneManagement;
 
 //플레이어 씬에 플레이어 및 메인카메라, GameManager, ObjectManager, UiManager 등 배치
 //로딩 매니저 씬과 플레이어 씬은 계속 활성화 된 채로 진행, 스테이지 씬은 추가로 로드 및 언로드
-
 public class LoadingSceneManager : MonoBehaviour
 {
     [SerializeField] GameObject loadingScene;
@@ -18,10 +17,10 @@ public class LoadingSceneManager : MonoBehaviour
 
     public enum SceneIndex
     {
-        TITLE = 0,
+        LOADING = 0,
         STAGE_1 = 1,
         STAGE_2 = 2,
-        LOADING = 3,
+        TITLE = 3,
         PLAYER_SCENE = 4
     }
 
@@ -54,6 +53,7 @@ public class LoadingSceneManager : MonoBehaviour
         StartCoroutine(Loading((int)SceneIndex.STAGE_1));
     }
 
+    //스테이지를 넘어갈 경우 curIdx 갱신 및 해당 stageIdx의 씬 로드, 현재 씬 언로드
     public void EnterStage(int stageIdx)
     {
         if (stageIdx == curIdx) return;

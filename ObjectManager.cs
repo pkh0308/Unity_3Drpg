@@ -8,6 +8,8 @@ public class ObjectManager : MonoBehaviour
     public static Func<string, GameObject> makeObj;
     public static Action<int> loadObjects;
 
+    [SerializeField] UiManager uiManager;
+
     // Objects
     [SerializeField] GameObject mushroomPrefab;
     [SerializeField] GameObject pineTreePrefab;
@@ -119,23 +121,29 @@ public class ObjectManager : MonoBehaviour
         }
 
         //enemies
+        int peacefulId = enemyPeacefulPrefab.GetComponent<Enemy>().EnemyId;
         for (int idx = 0; idx < enemyPeaceful.Length; idx++)
         {
             enemyPeaceful[idx] = Instantiate(enemyPeacefulPrefab);
             enemyPeaceful[idx].SetActive(false);
             //initialize
+            enemyPeaceful[idx].GetComponent<Enemy>().Initialize(uiManager.GetEnemyData(peacefulId));
         }
+        int normalId = enemyNormalPrefab.GetComponent<Enemy>().EnemyId;
         for (int idx = 0; idx < enemyNormal.Length; idx++)
         {
             enemyNormal[idx] = Instantiate(enemyNormalPrefab);
             enemyNormal[idx].SetActive(false);
             //initialize
+            enemyNormal[idx].GetComponent<Enemy>().Initialize(uiManager.GetEnemyData(normalId));
         }
+        int aggressiveId = enemyAggressivePrefab.GetComponent<Enemy>().EnemyId;
         for (int idx = 0; idx < enemyAggressive.Length; idx++)
         {
             enemyAggressive[idx] = Instantiate(enemyAggressivePrefab);
             enemyAggressive[idx].SetActive(false);
             //initialize
+            enemyAggressive[idx].GetComponent<Enemy>().Initialize(uiManager.GetEnemyData(aggressiveId));
         }
 
         //UI

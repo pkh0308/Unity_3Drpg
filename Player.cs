@@ -27,8 +27,8 @@ public class Player : MonoBehaviour
     PointerEventData p_data;
 
     [SerializeField] Transform moveReference;
-    public Vector3 targetPos;
-    public GameObject target;
+    Vector3 targetPos;
+    GameObject target;
     [SerializeField] float speed;
     [SerializeField] float walkOffset;
     [SerializeField] Transform cameraReference;
@@ -41,8 +41,9 @@ public class Player : MonoBehaviour
     enum AnimationVar { isRunning, isWalking, isCollecting, collectDone, doAttack, onDamaged, onDie, onRevive }
     enum Axis { Horizontal, Vertical }
 
-    public bool onUi;
+    bool onUi;
     public bool OnUi { get { return onUi; } }
+    public bool inEntrance;
 
     //전투 관련
     bool onCombat;
@@ -244,6 +245,25 @@ public class Player : MonoBehaviour
             if (target.transform.position != targetPos)
                 targetPos = new Vector3(target.transform.position.x, transform.position.y, target.transform.position.z);
 
+            if(inEntrance)
+            {
+                if(target.CompareTag(Tags.Entrance))
+                {
+                    Entrance enterLogic = target.GetComponent<Entrance>();
+                    transform.position = enterLogic.Enter();
+                    mainCamera.SetActive(mainCamera.activeSelf == false);
+                    inBuilding = (inBuilding == false);
+                    inEntrance = false;
+                    return;
+                }
+                if(target.CompareTag(Tags.StageDoor))
+                {
+                    LoadingSceneManager.enterStage(target.GetComponent<StageDoor>().StageIdx);
+                    inEntrance = false;
+                    return;
+                }
+            }
+
             if (Vector3.Distance(transform.position, targetPos) < 1.0f)
             {
                 Turn();
@@ -264,15 +284,6 @@ public class Player : MonoBehaviour
                         StartCoroutine(CollectItem(collectLogic.SpendTime, collectLogic.ItemId, collectLogic.ItemCount, collectLogic.SpCount));
                         collectLogic.StartCollect();
                         gameManager.ProgressStart(target.tag, collectLogic.SpendTime);
-                        break;
-                    case Tags.Entrance:
-                        Entrance enterLogic = target.GetComponent<Entrance>();
-                        transform.position = enterLogic.Enter();
-                        mainCamera.SetActive(mainCamera.activeSelf == false);
-                        inBuilding = (inBuilding == false);
-                        break;
-                    case Tags.StageDoor:
-                        LoadingSceneManager.enterStage(target.GetComponent<StageDoor>().StageIdx);
                         break;
                     case Tags.Enemy:
                         StartCoroutine(Attack());
@@ -307,13 +318,24 @@ public class Player : MonoBehaviour
         gameManager.GetItem(id, count);
     }
 
-    //장애물에 걸릴 시 처리
+    //입장 시 처리 및 장애물 충돌 시 처리
     void OnCollisionEnter(Collision collision)
     {
-        if (isTargetMoving == false) return;
+        if (collision.gameObject.CompareTag(Tags.Entrance) || collision.gameObject.CompareTag(Tags.StageDoor))
+        {
+            inEntrance = true;
+            return;
+        }
 
+        if (isTargetMoving == false) return;
         target = null;
         isTargetMoving = false;
+    }
+
+    void OnCollisionExit(Collision collision)
+    {
+        if (collision.gameObject.CompareTag(Tags.Entrance))
+            inEntrance = false;
     }
 
     //전투 관련

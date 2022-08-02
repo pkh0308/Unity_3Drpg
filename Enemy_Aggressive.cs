@@ -17,7 +17,6 @@ public class Enemy_Aggressive : Enemy
 
         ranDirs = new Vector3[] { ranMoveOffset * Vector3.left, ranMoveOffset * Vector3.right, ranMoveOffset * Vector3.forward, ranMoveOffset * Vector3.back };
         attackTimeOffset = new WaitForSeconds(attackTime);
-        curHp = maxHp;
 
         type = EnemyType.Aggressive;
         playerMask = (1 << LayerMask.NameToLayer(Tags.Player.ToString())); //OverlapSphere()용 마스크, player 레이어만 탐색
@@ -76,7 +75,7 @@ public class Enemy_Aggressive : Enemy
         {
             target = null;
             player = null;
-            if (hpBarSet != null) hpBarSet.SetActive(false);
+            if(hpBarSet != null) hpBarSet.SetActive(false);
         }
             
     }

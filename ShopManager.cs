@@ -61,6 +61,7 @@ public class ShopManager : MonoBehaviour
         itemReader.Close();
     }
 
+    //npc id를 넘겨받아 해당 npc의 상품 목록으로 샵 갱신
     public void SetShopSlots(int npcId)
     {
         List<int> items = npcShopDic[npcId];
@@ -101,6 +102,7 @@ public class ShopManager : MonoBehaviour
         infoSet.SetActive(false);
     }
 
+    //해당 상품의 ShopItem 데이터로 가격 및 수량 갱신
     public void PurchaseBtn(ShopItem item)
     {
         if (item.Data == null) return;

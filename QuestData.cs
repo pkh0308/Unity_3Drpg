@@ -1,6 +1,9 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
+//QuestManager에서 생성하여 Dictionary에 저장
+//퀘스트 id, 목표 카운트, 담당 npc, 타겟 id, 퀘스트 이름 및 설명 등의 정보 저장
+//퀘스트의 현재 상태값 저장 및 변경
 public class QuestData
 {
     public readonly int questId;

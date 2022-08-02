@@ -22,6 +22,7 @@ public class ItemSlot : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDrag
         slotIdx = idx;
     }
 
+    //전달받은 id와 갯수로 해당 슬롯의 이미지 및 카운트 갱신
     public void SetData(int id, int cnt)
     {
         itemId = id;
@@ -43,6 +44,8 @@ public class ItemSlot : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDrag
         }
     }
 
+    //아이템 갯수가 1일 경우 카운트 비활성화, 0일 경우 이미지 및 카운트 비활성화
+    //2개 이상일 경우 카운트 및 이미지 모두 활성화
     public bool AddItem(int cnt)
     {
         if (itemCount + cnt > int.MaxValue) return false;
@@ -89,6 +92,8 @@ public class ItemSlot : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDrag
     }
     
     // 아이템 드래그 로직
+    //드래그 시작 시 DragItem 클래스에 현재 슬롯의 아이템 정보 저장
+    //빈 슬롯 또는 다른 아이템이 있는 슬롯에서 드래그 종료 시, DragItem 을 통해 아이템 정보 교환
     public void OnBeginDrag(PointerEventData eventData)
     {
         if (!itemImg.gameObject.activeSelf) return;

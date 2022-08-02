@@ -147,8 +147,8 @@ public class UiManager : MonoBehaviour
             {
                 string[] datas = line.Split('@');
                 int id = int.Parse(datas[0]);
-                //0 : id, 1 : name, 2 : maxHp, 3 : description
-                EnemyData enemy = new EnemyData(id, datas[1], int.Parse(datas[2]), datas[3]);
+                //0 : id, 1 : name, 2 : maxHp, 3 : attackPower, 4 : description
+                EnemyData enemy = new EnemyData(id, datas[1], int.Parse(datas[2]), int.Parse(datas[3]), datas[4]);
                 enemyDic.Add(id, enemy);
 
                 line = enemyReader.ReadLine();
@@ -176,6 +176,7 @@ public class UiManager : MonoBehaviour
         }
     }
 
+    //대화 인덱스 초기화 및 상점 보유 여부 등 npc 데이터 세팅
     public void Conv_Set(string npcName, string[] texts, bool hasShop)
     {
         conv_Idx = 0;
@@ -190,6 +191,7 @@ public class UiManager : MonoBehaviour
         co_Texting = StartCoroutine(Conv_Texting());
     }
 
+    //대화 인덱스 초기화 및 퀘스트 상태값 갱신
     public void Conv_QuestSet(string[] texts, int questStatus)
     {
         conv_Idx = 0;
@@ -202,6 +204,7 @@ public class UiManager : MonoBehaviour
         co_Texting = StartCoroutine(Conv_Texting());
     }
 
+    //대화 인덱스 증가 및 버튼들 비활성화, 텍스팅 코루틴 시작
     public void Conv_NextBtn()
     {
         conv_Idx++;
@@ -217,6 +220,7 @@ public class UiManager : MonoBehaviour
         convShopSet.SetActive(convShopSet.activeSelf == false);
     }
 
+    //대화 내용을 1글자씩 텍스팅하는 코루틴, conv_speed 로 속도 조절
     IEnumerator Conv_Texting()
     {
         isTexting = true;
@@ -235,6 +239,7 @@ public class UiManager : MonoBehaviour
         SetConvBtns();
     }
 
+    //텍스팅 중에 대화 영역 클릭 시 코루틴 종료(텍스팅 스킵)
     public void Conv_CencleTexting()
     {
         if (isTexting == false) return;
@@ -246,6 +251,7 @@ public class UiManager : MonoBehaviour
         SetConvBtns();
     }
 
+    //퀘스트 상태에 따라 대화창 버튼들 노출여부 조절
     void SetConvBtns()
     {
         switch (questStatus)
@@ -307,6 +313,8 @@ public class UiManager : MonoBehaviour
         StartCoroutine(Progress(time));
     }
 
+    //프로그레스 바 노출 코루틴
+    //진행 시간이 있는 작업 시, 매 프레임마다 프로그레스 바의 x축 스케일 조정(1/작업시간)
     IEnumerator Progress(float time)
         {
             progressBarSet.SetActive(true);
@@ -342,6 +350,8 @@ public class UiManager : MonoBehaviour
         exitSet.SetActive(exitSet.activeSelf == false);
     }
 
+    //전처리기를 통해 에디터 상에서와 빌드 시 역할 구분
+    //유니티 에디터 환경일 경우 에디터 종료 함수, 실제 빌드 파일의 경우 어플리케이션 종료 함수 호출
     public void GameExit()
     {
 #if UNITY_EDITOR
@@ -461,13 +471,26 @@ public class UiManager : MonoBehaviour
         return data;
     }
 
+    public EnemyData GetEnemyData(int enemyId)
+    {
+        if(enemyDic.TryGetValue(enemyId, out EnemyData value) == false)
+        {
+            Debug.Log("enemyId not in Dictionary...");
+            return null;
+        }
+        return value;
+    }
+
     public void UpdateGold()
     {
         goldText.text = string.Format("{0:n0}", GoodsManager.Instance.Gold);
     }
 
     // 퀘스트 관련
+
     // for npc conversation quest panel
+    //해당 id의 npc가 가지고있는 퀘스트 데이터의 List를 전달받아,
+    //각 퀘스트들의 상태값에 맞게 UI 갱신
     public void UpdateQuestPanels(int npcId)
     {
         int idx = 0;
@@ -519,6 +542,8 @@ public class UiManager : MonoBehaviour
     }
 
     // for player quest panel 
+    //현재 플레이어가 가지고있는 퀘스트 데이터의 List를 전달받아,
+    //각 퀘스트들의 상태값에 맞게 UI 갱신
     public void UpdateQuestPanels()
     {
         Dictionary<int, QuestData> datas = QuestManager.Instance.playerQuestDic;

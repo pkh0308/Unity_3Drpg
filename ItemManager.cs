@@ -1,6 +1,8 @@
 ﻿using UnityEngine;
 using System;
 
+//사용 가능한 아이템들의 사용 시 로직 보관용 클래스
+//사뇽 가능한 아이템 추가 시 UseItem 에 id 및 로직 추가 요망
 public class ItemManager : MonoBehaviour
 {
     public static Func<int, bool> useItem;

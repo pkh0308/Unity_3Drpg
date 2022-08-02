@@ -26,12 +26,15 @@ public class CameraMove : MonoBehaviour
         Limit();
     }
 
+    //현재 카메라의 y축 회전각의 sin, cos값 계산
     void CalSinCos()
     {
         sinRes = Mathf.Sin(transform.eulerAngles.y * Mathf.Deg2Rad);
         cosRes = Mathf.Cos(transform.eulerAngles.y * Mathf.Deg2Rad);
     }
 
+    //마우스 휠 드래그를 입력받아 minWheel ~ maxWheel 내에서  wheel값 변경
+    //위에서 계산한 sin, cos 값에 wheel 값을 곱해서 offset 설정 후 카메라 포지션에 더해줌(줌 인 시 살짝 내려가도록 하기 위해 y축 값은 -0.5f)
     void Move()
     {
         wheel += Input.GetAxisRaw("Mouse ScrollWheel");
@@ -40,6 +43,7 @@ public class CameraMove : MonoBehaviour
         transform.position = target.position + offset.position + expandOffset;
     }
 
+    //z축 회전을 막기 위해 z축 회전각을 0으로 고정하는 함수
     void Limit()
     {
         angle = transform.eulerAngles;
@@ -47,6 +51,10 @@ public class CameraMove : MonoBehaviour
             transform.rotation = Quaternion.Euler(angle.x, angle.y, 0);
     }
 
+    //CameraDrag에서 계산한 x축, y축 이동값으로 카메라 회전
+    //좌우 드래그한 정도로 플레이어를 기준으로 y축 회전
+    //상하 드래그한 정도로 플레이어를 기준으로 x축, y축 회전(sin, cos 값 사용)
+    //카메라와 플레이어 간 거리 offset도 동일하게 회전시켜 시점 유지
     public void Turn(float x, float y)
     {
         transform.RotateAround(target.position, Vector3.up, x);

@@ -33,6 +33,7 @@ public class CameraDrag : MonoBehaviour
         rDown = Input.GetKey(KeyCode.Mouse1);
     }
 
+    //마우스 오른쪽 드래그 시 커서 변경 및 코루틴 실행
     void BeginDrag()
     {
         if (!rDown) return;
@@ -44,6 +45,7 @@ public class CameraDrag : MonoBehaviour
         StartCoroutine(Drag());
     }
 
+    //마우스의 x축, y축 이동 거리를 측정하여 CameraMove의 Turn 함수 호출
     IEnumerator Drag()
     {
         while(rDown && !lDown)

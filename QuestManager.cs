@@ -104,6 +104,9 @@ public class QuestManager
         questIdDic[questId].SetStatus(status);
     }
 
+    //채집형 퀘스트 갱신 메서드
+    //플레이어가 진행중인 퀘스트 중 습득한 아이템의 id와 타겟 id가 같은 퀘스트가 있는지 검사
+    //있을 경우, UiManager의 퀘스트 정보 갱신 함수 호출
     public void UpdateCollectQuest(int itemId, int count)
     {
         bool needUpdate = false;
@@ -120,6 +123,9 @@ public class QuestManager
         if (needUpdate) UiManager.updateQuestPanel();
     }
 
+    //처치형 퀘스트 갱신 메서드
+    //플레이어가 진행중인 퀘스트 중 처치한 적의 id와 타겟 id가 같은 퀘스트가 있는지 검사
+    //있을 경우, UiManager의 퀘스트 정보 갱신 함수 호출
     public void UpdateKillQuest(int enemyId)
     {
         bool needUpdate = false;

@@ -15,7 +15,6 @@ public class Enemy_Normal : Enemy
 
         ranDirs = new Vector3[] { ranMoveOffset * Vector3.left, ranMoveOffset * Vector3.right, ranMoveOffset * Vector3.forward, ranMoveOffset * Vector3.back };
         attackTimeOffset = new WaitForSeconds(attackTime);
-        curHp = maxHp;
 
         type = EnemyType.Normal;
     }

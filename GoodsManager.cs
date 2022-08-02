@@ -2,6 +2,7 @@
 
 public class GoodsManager
 {
+    //싱글톤 구현
     private static GoodsManager instance;
     public static GoodsManager Instance
     {
@@ -23,6 +24,7 @@ public class GoodsManager
         gold = PlayerPrefs.HasKey(Goods.Gold.ToString()) ? PlayerPrefs.GetInt(Goods.Gold.ToString()) : 0;
     }
 
+    //획득한 골드를 더해서 최대값(int.MaxValue)을 넘어갈 경우 false 반환
     public bool GetGold(int amount)
     {
         int temp = gold + amount;
@@ -33,6 +35,8 @@ public class GoodsManager
         return true;
     }
 
+    //사용 후 골드가 0 미만이 될 경우 false 반환
+    //호출 시 조건문안에 사용할 것(false 반환 시 실패 처리)
     public bool SpendGold(int price)
     {
         int temp = gold - price;

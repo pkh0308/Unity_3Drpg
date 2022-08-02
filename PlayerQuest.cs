@@ -8,6 +8,8 @@ public class PlayerQuest : MonoBehaviour
     [SerializeField] GameManager gameManager;
     [SerializeField] UiManager uiManager;
 
+    //퀘스트 수락 시 QuestManager에서 해당 id의 퀘스트 데이터를 불러옴
+    //채집형 퀘스트의 경우 현재 인벤토리에 해당 아이템의 보유 여부를 체크해 카운팅
     public void QuestAccept(int questId)
     {
         QuestData data = QuestManager.Instance.GetDataById(questId);
@@ -19,6 +21,8 @@ public class PlayerQuest : MonoBehaviour
         uiManager.UpdateQuestPanels();
     }
 
+    //퀘스트 클리어 시 QuestManager에서 해당 id의 퀘스트 데이터를 불러옴
+    //채집형 퀘스트의 경우 현재 인벤토리에 해당 아이템을 퀘스트 요구 개수만큼 차감
     public void QuestClear(int questId)
     {
         QuestData data = QuestManager.Instance.GetDataById(questId);

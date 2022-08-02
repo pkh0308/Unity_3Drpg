@@ -6,14 +6,14 @@ public class HpBar : MonoBehaviour
     [SerializeField] Image hpBar;
     Image hpBarSet;
 
-    private void Awake()
+    void Awake()
     {
         hpBarSet = GetComponent<Image>();
     }
 
-    public void UpdatePos(Vector3 pos)
+    public void UpdatePos(Vector3 pos, Vector3 offset)
     {
-        hpBarSet.rectTransform.position = pos;
+        hpBarSet.rectTransform.position = pos + offset;
     }
 
     public void UpdateScale(int curHp, int maxHp)

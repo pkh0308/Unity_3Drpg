@@ -7,21 +7,26 @@ using UnityEngine.AI;
 //EnemyType에 따라 달라지는 함수들은 상속 받은 클래스에서 선언
 public class Enemy : MonoBehaviour
 {
+    //기본 스테이터스 정보
     [SerializeField] protected int enemyId;
     public int EnemyId { get { return enemyId; } }
-    [SerializeField] protected int maxHp;
+    protected int maxHp;
     public int MaxHp { get { return maxHp; } }
     protected int curHp;
-    [SerializeField] protected int attackPower;
+    protected int attackPower;
     public int AttackPower { get { return attackPower; } }
     [SerializeField] protected float attackTime;
     protected WaitForSeconds attackTimeOffset;
+    protected string enemyName;
+    public string EnemyName { get { return enemyName; } }
 
+    //전투 관련 트리거
     protected bool onCombat;
     protected bool onAttacked;
     protected bool isDie;
     public bool IsDie { get { return isDie; } }
 
+    //UI 관련
     protected GameObject hpBarSet;
     protected HpBar hpBar;
     [SerializeField] protected Vector3 hpBarOffset;
@@ -46,6 +51,18 @@ public class Enemy : MonoBehaviour
     protected EnemyType type;
     public EnemyType Type { get { return type; } }
 
+    //ObjectManager에서 최초 생성 시 호출
+    //최대체력 및 공격력, 이름을 설정
+    public void Initialize(EnemyData data)
+    {
+        maxHp = data.maxHp;
+        curHp = maxHp;
+        attackPower = data.attackPower;
+        enemyName = data.enemyName;
+    }
+
+    //애니메이션 설정 후 플레이어의 피격 로직 호출
+    //플레이어 사망 시 전투 관련 변수들 초기화 및 체력바 미노출
     protected IEnumerator Attack()
     {
         onCombat = true;
@@ -73,6 +90,8 @@ public class Enemy : MonoBehaviour
         onCombat = false;
     }
 
+    //타겟이 없는 상태에서 피격 시 타겟으로 플레이어 설정(Normal 타입용)
+    //체력이 0이 되는 경우 사망 로직 호출
     public void OnDamaged(int dmg)
     {
         if (target == null)
@@ -94,12 +113,13 @@ public class Enemy : MonoBehaviour
     protected IEnumerator Damaged()
     {
         onAttacked = true;
-        //animator.SetTrigger(AnimationVar.onDamaged.ToString());
 
         yield return new WaitForSeconds(1.0f);
         onAttacked = false;
     }
 
+    //체력바를 노출한 적이 없으면 ObjectManager에서 할당받아 세팅
+    //현재 자신의 스크린상의 좌표를 WorldToScreenPoint 로 받은 뒤, hpBarOffset 을 더하여 위치 조정
     protected void SetHpBar()
     {
         if (hpBar == null)
@@ -110,19 +130,22 @@ public class Enemy : MonoBehaviour
         else
             hpBarSet.SetActive(true);
 
-        hpBar.UpdatePos(Camera.main.WorldToScreenPoint(transform.position + hpBarOffset));
+        hpBar.UpdatePos(Camera.main.WorldToScreenPoint(transform.position), hpBarOffset);
         hpBar.UpdateScale(curHp, maxHp);
     }
 
+    //(현재 체력/최대 체력) 값을 체력바의 x축 스케일로 설정하여 체력 표시  
     protected void UpdateHpBar()
     {
         if (hpBar == null) return;
         if (!hpBarSet.activeSelf) return;
-
-        hpBar.UpdatePos(Camera.main.WorldToScreenPoint(transform.position + hpBarOffset));
+        
+        hpBar.UpdatePos(Camera.main.WorldToScreenPoint(transform.position), hpBarOffset);
         hpBar.UpdateScale(curHp, maxHp);
     }
 
+    //모든 코루틴 취소 및 isDie 값을 true로 설정하여 다른 동작 정지
+    //기타 변수들을 초기화 및 킬 퀘스트 검사
     protected void OnDie()
     {
         StopAllCoroutines();
@@ -131,7 +154,7 @@ public class Enemy : MonoBehaviour
         onCombat = false;
         onAttacked = false;
         target = null;
-        hpBarSet.SetActive(false);
+        if(hpBarSet != null) hpBarSet.SetActive(false);
         QuestManager.Instance.UpdateKillQuest(enemyId);
 
         StartCoroutine(Die());

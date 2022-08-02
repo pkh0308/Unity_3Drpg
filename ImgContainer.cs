@@ -14,6 +14,7 @@ public class ImgContainer : MonoBehaviour
         getItemImg = (a) => { return GetItemImg(a); };
     }
 
+    //입력받은 id 아이템의 스프라이트 이미지 반환
     public Sprite GetItemImg(int id)
     {
         switch(id)
