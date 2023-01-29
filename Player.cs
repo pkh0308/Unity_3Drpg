@@ -20,6 +20,7 @@ public class Player : MonoBehaviour
     bool isCollecting;
     bool isOverUi;
     bool inBuilding;
+    bool onChat;
     int playerMask;
 
     [SerializeField] GameObject mainCamera;
@@ -86,7 +87,7 @@ public class Player : MonoBehaviour
     void Start()
     {
         uiManager.StsBar_HpUpdate(curHp, maxHp);
-        uiManager.StsBar_SpUpdate(curSp, maxSp);//GoodsManager.Instance.GetGold(10000);
+        uiManager.StsBar_SpUpdate(curSp, maxSp);
     }
 
     void Update()
@@ -106,6 +107,7 @@ public class Player : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.I)) uiManager.ControlInventorySet();
         if (Input.GetKeyDown(KeyCode.Q)) uiManager.ControlQuestSet();
         if (Input.GetKeyDown(KeyCode.Escape)) uiManager.CloseWindows();
+        if (Input.GetKeyDown(KeyCode.Return)) onChat = uiManager.Chat();
 
         //키보드 이동 관련 인풋
         hAxis = Input.GetAxisRaw(Axis.Horizontal.ToString());

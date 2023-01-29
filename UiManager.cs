@@ -11,6 +11,7 @@ public class UiManager : MonoBehaviour
 {
     [SerializeField] ShopManager shopManager;
 
+    [Header("UI")]
     [SerializeField] GameObject conversationSet;
     [SerializeField] GameObject inventorySet;
     [SerializeField] GameObject convQuestSet;
@@ -18,7 +19,16 @@ public class UiManager : MonoBehaviour
     [SerializeField] GameObject convShopSet;
     [SerializeField] TextMeshProUGUI goldText;
 
+    //채팅 관련
+    [Header("채팅")]
+    [SerializeField] GameObject chatSet;
+    [SerializeField] TMP_InputField chatInput;
+    [SerializeField] TextMeshProUGUI[] chatTexts;
+    [SerializeField] float chatInterval;
+    float chatCount;
+
     //스테이터스 바
+    [Header("스테이터스 바")]
     [SerializeField] GameObject menuSet;
     [SerializeField] Image hpBar;
     [SerializeField] Text hpCount;
@@ -39,6 +49,7 @@ public class UiManager : MonoBehaviour
     public Image progressBar;
 
     //대화 관련
+    [Header("npc 대화 관련")]
     [SerializeField] TextMeshProUGUI conv_NpcName;
     [SerializeField] TextMeshProUGUI conv_ConversationText;
     [SerializeField] GameObject conv_ExitBtn;
@@ -57,6 +68,7 @@ public class UiManager : MonoBehaviour
     string[] currentConversation;
 
     //퀘스트 관련
+    [Header("퀘스트")]
     [SerializeField] GameObject noQuestText;
     [SerializeField] QuestPanel[] questPanels;
     [SerializeField] GameObject[] questOnGoingPanels;
@@ -73,6 +85,7 @@ public class UiManager : MonoBehaviour
     QuestData curQuestData;
 
     //알림 텍스트 관련
+    [Header("알림 텍스트")]
     [SerializeField] TextMeshProUGUI midNoticeText;
     [SerializeField] float noticeSeconds;
     WaitForSeconds noticeSecs;
@@ -80,6 +93,7 @@ public class UiManager : MonoBehaviour
     public enum NoticeType { NotEnoughSp = 0 }
 
     //전투 관련
+    [Header("전투")]
     [SerializeField] GameObject deadSet;
 
     Dictionary<int, ItemData> itemDic;
@@ -159,6 +173,63 @@ public class UiManager : MonoBehaviour
 
         // 퀘스트 판넬 업데이트
         UpdateQuestPanels();
+    }
+
+    //채팅 관련
+    public bool Chat()
+    {
+        if (!chatInput.gameObject.activeSelf)
+        {
+            chatInput.gameObject.SetActive(true);
+            chatInput.Select();
+            return true;
+        }
+
+        //채팅창에 입력한 내용이 없다면 비활성화
+        if (chatInput.text == "")
+        {
+            chatInput.gameObject.SetActive(false);
+            return false;
+        }
+
+        //기존 채팅 텍스트들을 한칸씩 올리고 입력한 채팅을 맨 아래에 출력
+        for(int i = chatTexts.Length - 1; i > 0; i--)
+            chatTexts[i].text = chatTexts[i - 1].text;
+        chatTexts[0].text = chatInput.text;
+        chatInput.text = "";
+
+        chatCount = 0; //채팅창 갱신 주기 초기화
+        if (!chatSet.activeSelf)
+            StartCoroutine(showChat());
+        chatInput.gameObject.SetActive(false);
+        return false;
+    }
+
+    IEnumerator showChat()
+    {
+        chatSet.SetActive(true);
+
+        while(chatSet.activeSelf)
+        {
+            chatCount += Time.deltaTime;
+            if (chatCount > chatInterval)
+            {
+                //가장 오래된 유효한 텍스트 비활성화
+                for (int i = chatTexts.Length - 1; i >= 0; i--)
+                {
+                    if (chatTexts[i].text == "") continue;
+
+                    chatTexts[i].text = "";
+                    break;
+                }
+                //모든 텍스트가 비활성화되면 채팅셋 비활성화
+                if (chatTexts[0].text == "")
+                    chatSet.SetActive(false);
+
+                chatCount = 0;
+            }
+            yield return null;
+        }
     }
 
     //대화 관련
