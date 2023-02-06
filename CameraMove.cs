@@ -2,7 +2,7 @@
 
 public class CameraMove : MonoBehaviour
 {
-    public Transform target;
+    Transform target;
     public Transform offset;
     Vector3 expandOffset;
 
@@ -14,13 +14,16 @@ public class CameraMove : MonoBehaviour
     float cosRes;
     float sinRes;
 
-    void Start()
+    public void SetTarget(Transform target)
     {
+        this.target = target;
         transform.position = target.position + offset.position;
     }
 
     void Update()
     {
+        if (target == null) return;
+
         CalSinCos();
         Move();
         Limit();

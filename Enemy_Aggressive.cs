@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using UnityEngine.AI;
+using Photon.Pun;
 
 //플레이어가 searchDistance 안에 들어올 경우 바로 타겟으로 설정
 //Physics.OverlapSphere() 함수로 searchDistance 내부에 플레이어가 있는지 체크
@@ -9,6 +10,7 @@ public class Enemy_Aggressive : Enemy
 
     void Awake()
     {
+        PV = GetComponent<PhotonView>();
         coll = GetComponent<BoxCollider>();
         nav = GetComponent<NavMeshAgent>();
         animator = GetComponentInChildren<Animator>();

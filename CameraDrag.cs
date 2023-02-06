@@ -15,9 +15,9 @@ public class CameraDrag : MonoBehaviour
     bool rDown;
     bool isDraging;
 
-    void Awake()
+    public void SetPlayer(Player player)
     {
-        player = Player.getPlayer();
+        this.player = player;
     }
 
     void Update()

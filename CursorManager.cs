@@ -1,7 +1,10 @@
 ﻿using UnityEngine;
+using System;
 
 public class CursorManager : MonoBehaviour
 {
+    public static Func<CursorManager> GetCursorManager;
+
     public Texture2D[] cursorTextures;
     public enum CursorIndexes { DEFAULT = 0, ROTATE = 1, CONV = 2, COLLECT = 3, ENTRANCE = 4, Enemy = 5, ROTATEEND = 99 }
 
@@ -10,6 +13,8 @@ public class CursorManager : MonoBehaviour
 
     void Awake()
     {
+        GetCursorManager = () => { return this; };
+
         Cursor.SetCursor(cursorTextures[0], Vector2.zero, CursorMode.Auto);
         currentIdx = 0;
     }

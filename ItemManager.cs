@@ -11,7 +11,11 @@ public class ItemManager : MonoBehaviour
     void Awake()
     {
         useItem = (a) => { return UseItem(a); };
-        player = Player.getPlayer();
+    }
+
+    public void SetPlayer(Player player)
+    {
+        this.player = player;
     }
 
     bool UseItem(int id)

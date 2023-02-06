@@ -11,19 +11,23 @@ public class ObjectManager : MonoBehaviour
     [SerializeField] UiManager uiManager;
 
     // Objects
+    [Header("오브젝트")]
     [SerializeField] GameObject mushroomPrefab;
     [SerializeField] GameObject pineTreePrefab;
 
     //npcs
+    [Header("NPC")]
     [SerializeField] GameObject misakiPrefab;
     [SerializeField] GameObject yukoPrefab;
 
     //enemies
+    [Header("몬스터")]
     [SerializeField] GameObject enemyPeacefulPrefab;
     [SerializeField] GameObject enemyNormalPrefab;
     [SerializeField] GameObject enemyAggressivePrefab;
 
     //UI
+    [Header("UI")]
     [SerializeField] GameObject hpBarPrefab;
     [SerializeField] Canvas minorCanvas;
 
@@ -43,7 +47,7 @@ public class ObjectManager : MonoBehaviour
     void Awake()
     {
         makeObj = (a) => { return MakeObj(a); };
-        loadObjects = (a) => { Generate(); LoadObjects(a); };
+        loadObjects = (a) => {  Generate(); LoadObjects(a); };
 
         mushroom = new GameObject[30];
         pineTree = new GameObject[30];
@@ -91,18 +95,6 @@ public class ObjectManager : MonoBehaviour
     // 최초 비활성화, 이 후 MakeObj 함수로 활성화
     void Generate()
     {
-        //objects
-        for (int idx = 0; idx < mushroom.Length; idx++)
-        {
-            mushroom[idx] = Instantiate(mushroomPrefab);
-            mushroom[idx].SetActive(false);
-        }
-        for (int idx = 0; idx < mushroom.Length; idx++)
-        {
-            pineTree[idx] = Instantiate(pineTreePrefab);
-            pineTree[idx].SetActive(false);
-        }
-
         //npcs
         int npcIdx = 0;
         for (int idx = 0; idx < misaki.Length; idx++)
@@ -119,44 +111,55 @@ public class ObjectManager : MonoBehaviour
             npcDatas[npcIdx] = yuko[idx].GetComponent<Npc>();
             npcIdx++;
         }
-
-        //enemies
-        int peacefulId = enemyPeacefulPrefab.GetComponent<Enemy>().EnemyId;
-        for (int idx = 0; idx < enemyPeaceful.Length; idx++)
-        {
-            enemyPeaceful[idx] = Instantiate(enemyPeacefulPrefab);
-            enemyPeaceful[idx].SetActive(false);
-            //initialize
-            enemyPeaceful[idx].GetComponent<Enemy>().Initialize(uiManager.GetEnemyData(peacefulId));
-        }
-        int normalId = enemyNormalPrefab.GetComponent<Enemy>().EnemyId;
-        for (int idx = 0; idx < enemyNormal.Length; idx++)
-        {
-            enemyNormal[idx] = Instantiate(enemyNormalPrefab);
-            enemyNormal[idx].SetActive(false);
-            //initialize
-            enemyNormal[idx].GetComponent<Enemy>().Initialize(uiManager.GetEnemyData(normalId));
-        }
-        int aggressiveId = enemyAggressivePrefab.GetComponent<Enemy>().EnemyId;
-        for (int idx = 0; idx < enemyAggressive.Length; idx++)
-        {
-            enemyAggressive[idx] = Instantiate(enemyAggressivePrefab);
-            enemyAggressive[idx].SetActive(false);
-            //initialize
-            enemyAggressive[idx].GetComponent<Enemy>().Initialize(uiManager.GetEnemyData(aggressiveId));
-        }
-
         //UI
         for (int idx = 0; idx < hpBar.Length; idx++)
         {
             hpBar[idx] = Instantiate(hpBarPrefab, minorCanvas.transform);
             hpBar[idx].SetActive(false);
         }
+        
+        //마스터 클라이언트가 아니라면 이하 오브젝트는 생성x
+        if(!NetworkManager.Inst.IsMaster()) return;
+
+        //objects
+        for (int idx = 0; idx < mushroom.Length; idx++)
+        {
+            mushroom[idx] = NetworkManager.Inst.Instantiate(ObjectNames.mushroom);
+            mushroom[idx].SetActive(false);
+        }
+
+        //enemies
+        int peacefulId = enemyPeacefulPrefab.GetComponent<Enemy>().EnemyId;
+        for (int idx = 0; idx < enemyPeaceful.Length; idx++)
+        {
+            enemyPeaceful[idx] = Instantiate(enemyPeacefulPrefab);
+            //initialize
+            enemyPeaceful[idx].GetComponent<Enemy>().Initialize(uiManager.GetEnemyData(peacefulId));
+            enemyPeaceful[idx].SetActive(false);
+        }
+        int normalId = enemyNormalPrefab.GetComponent<Enemy>().EnemyId;
+        for (int idx = 0; idx < enemyNormal.Length; idx++)
+        {
+            enemyNormal[idx] = Instantiate(enemyNormalPrefab);
+            //initialize
+            enemyNormal[idx].GetComponent<Enemy>().Initialize(uiManager.GetEnemyData(normalId));
+            enemyNormal[idx].SetActive(false);
+        }
+        int aggressiveId = enemyAggressivePrefab.GetComponent<Enemy>().EnemyId;
+        for (int idx = 0; idx < enemyAggressive.Length; idx++)
+        {
+            enemyAggressive[idx] = Instantiate(enemyAggressivePrefab);
+            //initialize
+            enemyAggressive[idx].GetComponent<Enemy>().Initialize(uiManager.GetEnemyData(aggressiveId));
+            enemyAggressive[idx].SetActive(false);
+        }
     }
 
     // stageTable.csv 파일을 읽어들여서 해당 스테이지의 오브젝트 배치
     void LoadObjects(int stageIdx)
     {
+        if(!NetworkManager.Inst.IsMaster()) return;
+
         TextAsset stageTable = Resources.Load("stageTable") as TextAsset;
         StringReader reader = new StringReader(stageTable.text);
 
@@ -185,22 +188,10 @@ public class ObjectManager : MonoBehaviour
     // 매개변수는 ObjectNames 클래스를 이용
     public GameObject MakeObj(string type)
     {
-        bool isNpc = false;
         switch (type)
         {
             case ObjectNames.mushroom:
                 targetPool = mushroom;
-                break;
-            case ObjectNames.pineTree:
-                targetPool = pineTree;
-                break;
-            case ObjectNames.misaki:
-                targetPool = misaki;
-                isNpc = true;
-                break;
-            case ObjectNames.yuko:
-                targetPool = yuko;
-                isNpc = true;
                 break;
             case ObjectNames.enemyPeaceful:
                 targetPool = enemyPeaceful;
@@ -221,18 +212,10 @@ public class ObjectManager : MonoBehaviour
             if (!targetPool[idx].activeSelf)
             {
                 targetPool[idx].SetActive(true);
-                if (isNpc) SetNpcData(targetPool[idx]);
                 return targetPool[idx];
             }
         }
         return null;
-    }
-
-    void SetNpcData(GameObject target)
-    {
-        Npc npcLogic = target.GetComponent<Npc>();
-        string[] data = npcDataDic[npcLogic.NpcId];
-        npcLogic.SetData(data[0], bool.Parse(data[1]));
     }
 
     // 오브젝트 이름을 string 형태로 받아 해당하는 오브젝트 전체 풀을 반환

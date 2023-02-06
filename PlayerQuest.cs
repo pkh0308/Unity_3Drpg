@@ -3,10 +3,14 @@ using System.Collections.Generic;
 
 public class PlayerQuest : MonoBehaviour
 {
-    [SerializeField] QuestPanel[] questPanels;
+    GameManager gameManager;
+    UiManager uiManager;
 
-    [SerializeField] GameManager gameManager;
-    [SerializeField] UiManager uiManager;
+    void Awake()
+    {
+        gameManager = GameManager.GetGameManager();
+        uiManager = UiManager.GetUiManager();
+    }
 
     //퀘스트 수락 시 QuestManager에서 해당 id의 퀘스트 데이터를 불러옴
     //채집형 퀘스트의 경우 현재 인벤토리에 해당 아이템의 보유 여부를 체크해 카운팅

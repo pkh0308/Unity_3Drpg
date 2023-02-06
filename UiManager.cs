@@ -6,9 +6,14 @@ using System.Collections.Generic;
 using System.IO;
 using System;
 using System.Linq;
+using Photon.Pun;
+using Photon.Realtime;
 
 public class UiManager : MonoBehaviour
 {
+    public static Func<UiManager> GetUiManager;
+    PhotonView PV;
+
     [SerializeField] ShopManager shopManager;
 
     [Header("UI")]
@@ -24,8 +29,11 @@ public class UiManager : MonoBehaviour
     [SerializeField] GameObject chatSet;
     [SerializeField] TMP_InputField chatInput;
     [SerializeField] TextMeshProUGUI[] chatTexts;
+    [SerializeField] Image chatBg;
     [SerializeField] float chatInterval;
     float chatCount;
+    int numOfChat = 0;
+    Vector3 bgScale = Vector3.one;
 
     //스테이터스 바
     [Header("스테이터스 바")]
@@ -106,6 +114,10 @@ public class UiManager : MonoBehaviour
 
     void Awake()
     {
+        GetUiManager = () => { return this; };
+
+        PV = GetComponent<PhotonView>();
+
         descRect = itemDescription.GetComponent<RectTransform>();
         descSize = descRect.sizeDelta * 0.8f;
         noticeSecs = new WaitForSeconds(noticeSeconds);
@@ -175,13 +187,20 @@ public class UiManager : MonoBehaviour
         UpdateQuestPanels();
     }
 
-    //채팅 관련
-    public bool Chat()
+    //PlayerQuest에 전달용
+    public QuestPanel[] GetQuestPanels()
     {
+        return questPanels;
+    }
+
+    #region 채팅 관련
+    public bool Chat(string name)
+    {
+        //채팅창이 닫힌 상태라면 오픈
         if (!chatInput.gameObject.activeSelf)
         {
             chatInput.gameObject.SetActive(true);
-            chatInput.Select();
+            chatInput.ActivateInputField();
             return true;
         }
 
@@ -192,38 +211,53 @@ public class UiManager : MonoBehaviour
             return false;
         }
 
-        //기존 채팅 텍스트들을 한칸씩 올리고 입력한 채팅을 맨 아래에 출력
-        for(int i = chatTexts.Length - 1; i > 0; i--)
+        PV.RPC(nameof(InputChat), RpcTarget.All, name + ": " + chatInput.text);
+        chatInput.ActivateInputField(); //채팅 후 바로 활성화
+        return true;
+    }
+
+    //기존 채팅 텍스트들을 한칸씩 올리고 입력한 채팅을 맨 아래에 출력
+    //채팅셋이 비활성화 상태라면 채팅 코루틴 시작
+    [PunRPC]
+    void InputChat(string msg)
+    {
+        for (int i = chatTexts.Length - 1; i > 0; i--)
             chatTexts[i].text = chatTexts[i - 1].text;
-        chatTexts[0].text = chatInput.text;
+        chatTexts[0].text = msg;
         chatInput.text = "";
+
+        //채팅 개수를 1 올리고 채팅 배경 스케일 조정
+        if (numOfChat < chatTexts.Length)
+            numOfChat++;
+        bgScale.y = 0.2f * numOfChat;
+        chatBg.rectTransform.localScale = bgScale;
 
         chatCount = 0; //채팅창 갱신 주기 초기화
         if (!chatSet.activeSelf)
-            StartCoroutine(showChat());
-        chatInput.gameObject.SetActive(false);
-        return false;
+            StartCoroutine(ShowChatRoutine());
     }
 
-    IEnumerator showChat()
+    void ChatMinus()
+    {
+        if(numOfChat > 0) numOfChat--;
+        bgScale.y = 0.2f * numOfChat;
+        chatBg.rectTransform.localScale = bgScale;
+    }
+
+    IEnumerator ShowChatRoutine()
     {
         chatSet.SetActive(true);
 
-        while(chatSet.activeSelf)
+        while (chatSet.activeSelf)
         {
-            chatCount += Time.deltaTime;
+            chatCount += Time.deltaTime; 
             if (chatCount > chatInterval)
             {
                 //가장 오래된 유효한 텍스트 비활성화
-                for (int i = chatTexts.Length - 1; i >= 0; i--)
-                {
-                    if (chatTexts[i].text == "") continue;
-
-                    chatTexts[i].text = "";
-                    break;
-                }
+                chatTexts[numOfChat - 1].text = "";
+                ChatMinus();
                 //모든 텍스트가 비활성화되면 채팅셋 비활성화
-                if (chatTexts[0].text == "")
+                if (numOfChat == 0)
                     chatSet.SetActive(false);
 
                 chatCount = 0;
@@ -231,8 +265,10 @@ public class UiManager : MonoBehaviour
             yield return null;
         }
     }
+    #endregion
 
-    //대화 관련
+    #region npc 대화 관련
+    //대화창 초기화
     public void Conv_SetActive(bool act)
     {
         conversationSet.SetActive(act);
@@ -360,6 +396,7 @@ public class UiManager : MonoBehaviour
         convShopSet.SetActive(false);
         convQuestSet.SetActive(convQuestSet.activeSelf == false);
     }
+    #endregion
 
     //기타 UI 관련
     public void ControlInventorySet()
@@ -479,7 +516,7 @@ public class UiManager : MonoBehaviour
         questSet.SetActive(false);
     }
 
-    // 아이템 관련
+    #region 아이템 관련
     public void ItemDescOn(int itemId)
     {
         if (itemId == 0) { ItemDescOff(); return; }
@@ -541,6 +578,7 @@ public class UiManager : MonoBehaviour
         }
         return data;
     }
+    #endregion
 
     public EnemyData GetEnemyData(int enemyId)
     {
@@ -559,7 +597,7 @@ public class UiManager : MonoBehaviour
 
     // 퀘스트 관련
 
-    // for npc conversation quest panel
+    //for npc conversation quest panel
     //해당 id의 npc가 가지고있는 퀘스트 데이터의 List를 전달받아,
     //각 퀘스트들의 상태값에 맞게 UI 갱신
     public void UpdateQuestPanels(int npcId)
@@ -612,7 +650,7 @@ public class UiManager : MonoBehaviour
         }
     }
 
-    // for player quest panel 
+    //for player quest panel 
     //현재 플레이어가 가지고있는 퀘스트 데이터의 List를 전달받아,
     //각 퀘스트들의 상태값에 맞게 UI 갱신
     public void UpdateQuestPanels()

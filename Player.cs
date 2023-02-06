@@ -1,44 +1,44 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using Photon.Pun;
 
 public class Player : MonoBehaviour
 {
-    //플레이어 체크용
-    public static Func<Player> getPlayer;
-    Player GetPlayer() { return this; }
-
+    //이동 관련 변수
     float hAxis;
     float vAxis;
     bool wDown;
     bool mouseLeft;
     bool mouseLeftDown;
+    //행동 제한용 변수
     bool isTargetMoving;
     bool isCollecting;
     bool isOverUi;
     bool inBuilding;
     bool onChat;
+    
     int playerMask;
 
-    [SerializeField] GameObject mainCamera;
-    [SerializeField] GraphicRaycaster uiRaycaster;
     PointerEventData p_data;
 
-    [SerializeField] Transform moveReference;
     Vector3 targetPos;
     GameObject target;
     [SerializeField] float speed;
     [SerializeField] float walkOffset;
-    [SerializeField] Transform cameraReference;
+
+    //수동 할당 필요
+    GameObject mainCamera;
+    GraphicRaycaster uiRaycaster;
+    Transform moveReference;
+    Transform cameraReference;
+    GameManager gameManager;
+    UiManager uiManager;
+    CursorManager cursorManger;
 
     [SerializeField] Animator playerAnimator;
-    [SerializeField] GameManager gameManager;
-    [SerializeField] UiManager uiManager;
-    [SerializeField] CursorManager cursorManger;
-
     enum AnimationVar { isRunning, isWalking, isCollecting, collectDone, doAttack, onDamaged, onDie, onRevive }
     enum Axis { Horizontal, Vertical }
 
@@ -69,7 +69,11 @@ public class Player : MonoBehaviour
     [SerializeField] int attackPower;
     WaitForSeconds attackTimeOffset;
     Coroutine damagedRoutine;
-    
+
+    [Header("네트워크")]
+    PhotonView PV;
+    string playerName;
+
     void Awake()
     {
         playerMask = (-1) - (1 << LayerMask.NameToLayer(Tags.Player.ToString()));
@@ -80,22 +84,34 @@ public class Player : MonoBehaviour
         curSp = maxSp;
         hpSeconds = new WaitForSeconds(hpRecoverySeconds);
         spSeconds = new WaitForSeconds(spRecoverySeconds);
+        playerName = NetworkManager.Inst.GetName();
 
-        getPlayer = () => { return GetPlayer(); };
+        PV = GetComponent<PhotonView>();
     }
 
-    void Start()
+    public void Initialize(GameObject mainCamera, GraphicRaycaster uiRaycaster, Transform moveReference, Transform cameraReference)
     {
+        gameManager = GameManager.GetGameManager();
+        uiManager = UiManager.GetUiManager();
+        cursorManger = CursorManager.GetCursorManager();
+
+        this.mainCamera = mainCamera;
+        this.uiRaycaster = uiRaycaster;
+        this.moveReference = moveReference;
+        this.cameraReference = cameraReference;
+
         uiManager.StsBar_HpUpdate(curHp, maxHp);
         uiManager.StsBar_SpUpdate(curSp, maxSp);
     }
 
     void Update()
     {
-        if (isDied) return;
-        InputCheck();
-        if (gameManager.Pause) return;
+        if (!PV.IsMine) return;
 
+        if (isDied || gameManager.OnConv) return;
+        InputCheck();
+
+        if (isCollecting) return;
         Move();
         TargetMove();
         Turn();
@@ -107,7 +123,7 @@ public class Player : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.I)) uiManager.ControlInventorySet();
         if (Input.GetKeyDown(KeyCode.Q)) uiManager.ControlQuestSet();
         if (Input.GetKeyDown(KeyCode.Escape)) uiManager.CloseWindows();
-        if (Input.GetKeyDown(KeyCode.Return)) onChat = uiManager.Chat();
+        if (Input.GetKeyDown(KeyCode.Return)) onChat = uiManager.Chat(playerName);
 
         //키보드 이동 관련 인풋
         hAxis = Input.GetAxisRaw(Axis.Horizontal.ToString());
@@ -152,7 +168,7 @@ public class Player : MonoBehaviour
 
         //마우스가 UI 위에 있지 않을 경우
         //Raycast로 플레이어를 제외한 타겟을 검출하고 타겟쪽으로 이동 및 커서 변경, 타겟에 따라 추가 행동(대화, 채집 등)
-        if (gameManager.Pause) return;
+        if (gameManager.OnConv) return;
         if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out RaycastHit rayHit, Mathf.Infinity, playerMask))
         {
             switch (rayHit.collider.tag)
@@ -187,6 +203,8 @@ public class Player : MonoBehaviour
 
     void Move()
     {
+        if (onChat) return;
+
         if (isCollecting || onCombat || onAttacked) return;
 
         moveReference.position = wDown ? speed * walkOffset * new Vector3(hAxis, 0, vAxis).normalized
@@ -211,7 +229,7 @@ public class Player : MonoBehaviour
     //마우스 이동 시 호출
     void SetTargetPos(Vector3 target)
     {
-        if (onCombat) return;
+        if (onCombat || isCollecting) return;
 
         targetPos = new Vector3(target.x, transform.position.y, target.z);
         isTargetMoving = true;
@@ -232,7 +250,7 @@ public class Player : MonoBehaviour
     void TargetMove()
     {
         if (onCombat) return;
-        if (isTargetMoving == false || isCollecting) return;
+        if (isTargetMoving == false) return;
 
         if (target == null)
         {
@@ -260,7 +278,7 @@ public class Player : MonoBehaviour
                 }
                 if(target.CompareTag(Tags.StageDoor))
                 {
-                    LoadingSceneManager.enterStage(target.GetComponent<StageDoor>().StageIdx);
+                    LoadingSceneManager.Inst.EnterStage(target.GetComponent<StageDoor>().StageIdx);
                     inEntrance = false;
                     return;
                 }
@@ -274,7 +292,7 @@ public class Player : MonoBehaviour
                     case Tags.Npc:
                         Npc npcLogic = target.GetComponent<Npc>();
                         npcLogic.Turn(transform.position);
-                        gameManager.Conv_Start(npcLogic.NpcName, npcLogic.NpcId, npcLogic.HasShop); 
+                        gameManager.Conv_Start(npcLogic.NpcName, npcLogic.NpcId, npcLogic.HasShop);
                         break;
                     case Tags.Collectable:
                         ICollectable collectLogic = target.GetComponent<ICollectable>();
@@ -316,7 +334,7 @@ public class Player : MonoBehaviour
         yield return new WaitForSeconds(time);
         isCollecting = false;
         playerAnimator.SetBool(AnimationVar.isCollecting.ToString(), false);
-        playerAnimator.SetTrigger(AnimationVar.collectDone.ToString());
+        PV.RPC(nameof(SetTrigger_CollectDone), RpcTarget.All);
         gameManager.GetItem(id, count);
     }
 
@@ -340,16 +358,42 @@ public class Player : MonoBehaviour
             inEntrance = false;
     }
 
+    //애니메이션 트리거
+    //트리거는 자동 동기화가 안되므로 RPC로 호출
+    [PunRPC]
+    void SetTrigger_CollectDone()
+    {
+        playerAnimator.SetTrigger(AnimationVar.collectDone.ToString());
+    }
+
+    [PunRPC]
+    void SetTrigger_Attack()
+    {
+        playerAnimator.SetTrigger(AnimationVar.doAttack.ToString());
+    }
+
+    [PunRPC]
+    void SetTrigger_Die()
+    {
+        playerAnimator.SetTrigger(AnimationVar.onDie.ToString());
+    }
+
+    [PunRPC]
+    void SetTrigger_Revive()
+    {
+        playerAnimator.SetTrigger(AnimationVar.onRevive.ToString());
+    }
+
     //전투 관련
     IEnumerator Attack()
     {
         onCombat = true;
-        playerAnimator.SetTrigger(AnimationVar.doAttack.ToString());
+        PV.RPC(nameof(SetTrigger_Attack), RpcTarget.All);
         //적 피격 로직 호출
         if (target.TryGetComponent<Enemy>(out Enemy enemy) == false)
             Debug.Log("It's not a enemy...");
         else
-            enemy.OnDamaged(attackPower);
+            enemy.OnDamaged(attackPower, transform);
 
         yield return attackTimeOffset;
         onCombat = false;
@@ -374,7 +418,6 @@ public class Player : MonoBehaviour
     IEnumerator Damaged()
     {
         onAttacked = true;
-        //playerAnimator.SetTrigger(AnimationVar.onDamaged.ToString());
 
         yield return new WaitForSeconds(1.0f);
         onAttacked = false;
@@ -396,7 +439,7 @@ public class Player : MonoBehaviour
     public void ReviveAtStartPoint()
     {
         isDied = false;
-        LoadingSceneManager.enterStage((int)LoadingSceneManager.SceneIndex.STAGE_1);
+        LoadingSceneManager.Inst.EnterStage((int)LoadingSceneManager.SceneIndex.STAGE_1);
         transform.position = Vector3.zero;
         curHp = maxHp;
         curSp = maxSp;

@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.UI;
 using System.IO;
 using System.Collections.Generic;
 using System;
@@ -6,13 +7,25 @@ using System.Linq;
 
 public class GameManager : MonoBehaviour
 {
+    public static Func<GameManager> GetGameManager;
+
+    [Header("컴포넌트")]
     [SerializeField] UiManager uiManager;
     [SerializeField] CursorManager cursorManager;
     [SerializeField] ShopManager shopManager;
-    [SerializeField] PlayerQuest playerQuest;
+    [SerializeField] CameraDrag cameraDrag;
+    [SerializeField] ItemManager itemManager;
+    [SerializeField] CameraMove cameraMove;
+    PlayerQuest playerQuest;
 
-    bool pause;
-    public bool Pause { get { return pause; } }
+    [Header("플레이어 전달")]
+    [SerializeField] GameObject mainCamera;
+    [SerializeField] GraphicRaycaster uiRaycaster;
+    [SerializeField] Transform moveReference;
+    [SerializeField] Transform cameraReference;
+
+    bool onConv;
+    public bool OnConv { get { return onConv; } }
     bool isDraging;
     public bool IsDraging { get { return isDraging; } }
     int tempQuestId;
@@ -31,6 +44,8 @@ public class GameManager : MonoBehaviour
 
     void Awake()
     {
+        GetGameManager = () => { return this; };
+
         convDic = new Dictionary<int, string[]>();
         npcConvMatchDic = new Dictionary<int, int>();
         npcDataDic = new Dictionary<int, string[]>();
@@ -116,11 +131,19 @@ public class GameManager : MonoBehaviour
         npcDataReader.Close();
     }
 
-    public void SetPause(bool act)
+    void Start()
     {
-        pause = act;
+        GameObject myPlayer = NetworkManager.Inst.StartCharacter();
+        Player playerLogic = myPlayer.GetComponent<Player>();
+        cameraDrag.SetPlayer(playerLogic);
+        cameraMove.SetTarget(myPlayer.transform);
+        itemManager.SetPlayer(playerLogic);
+        playerQuest = myPlayer.GetComponent<PlayerQuest>();
+
+        playerLogic.Initialize(mainCamera, uiRaycaster, moveReference, cameraReference);
     }
 
+    #region 대화창 관련
     public void Conv_Start(string npcName, int npcId, bool hasShop)
     {
         int key = npcConvMatchDic[npcId];
@@ -129,7 +152,7 @@ public class GameManager : MonoBehaviour
         uiManager.UpdateQuestPanels(npcId);
         if (hasShop) shopManager.SetShopSlots(npcId);
         cursorManager.CursorChange((int)CursorManager.CursorIndexes.DEFAULT);
-        pause = true;
+        onConv = true;
     }
 
     public void Conv_StartQuest(int convId, int questId, int questStatus)
@@ -138,13 +161,12 @@ public class GameManager : MonoBehaviour
         uiManager.Conv_SetActive(true);
         cursorManager.CursorChange((int)CursorManager.CursorIndexes.DEFAULT);
         tempQuestId = questId;
-        pause = true;
     }
 
     public void Conv_ExitBtn()
     {
         uiManager.Conv_SetActive(false);
-        pause = false;
+        onConv = false;
     }
 
     public void Conv_QuestAcceptBtn()
@@ -163,24 +185,22 @@ public class GameManager : MonoBehaviour
         uiManager.SetQuestDesc(null);
         QuestManager.Instance.SetQuestStatus(tempQuestId, (int)QuestData.QuestStatusType.Cleared);
     }
+    #endregion
 
-    public void ProgressStart(string name, float time)
-    {
-        uiManager.ControllProgressBarSet(name, time);
-    }
-
+    #region 아이템 관련
+    //아이템 획득 시
     public void GetItem(int id, int count)
     {
         //골드일 경우
-        if(id > 90000)
+        if (id > 90000)
         {
-            if(GoodsManager.Instance.GetGold(count) == false) Debug.Log("GetGold Failed...");
+            if (GoodsManager.Instance.GetGold(count) == false) Debug.Log("GetGold Failed...");
             uiManager.UpdateGold();
             return;
         }
 
         //최초 획득 시
-        if(invenDic.ContainsKey(id) == false)
+        if (invenDic.ContainsKey(id) == false)
         {
             if (invenArr.Min() > 0)
             {
@@ -189,19 +209,19 @@ public class GameManager : MonoBehaviour
             else
                 invenDic.Add(id, 0);
         }
-        
+
         QuestManager.Instance.UpdateCollectQuest(id, count);
         uiManager.UpdateQuestDescCount();
         //인벤토리에 없던 아이템 습득 시
         if (invenDic[id] == 0)
         {
-            if(invenArr.Min() > 0)
+            if (invenArr.Min() > 0)
             {
                 //인벤토리가 꽉 찼을 때 습득 시 처리
             }
             else
             {
-                for(int i = 0; i < invenArr.Length; i++)
+                for (int i = 0; i < invenArr.Length; i++)
                 {
                     if (invenArr[i] > 0) continue;
 
@@ -280,6 +300,12 @@ public class GameManager : MonoBehaviour
     public void SetBoolDrag(bool act)
     {
         isDraging = act;
+    }
+    #endregion
+
+    public void ProgressStart(string name, float time)
+    {
+        uiManager.ControllProgressBarSet(name, time);
     }
 
     public void GameSave()

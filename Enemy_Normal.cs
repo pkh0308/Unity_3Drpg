@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using UnityEngine.AI;
+using Photon.Pun;
 
 //플레이어에게 공격받는 순간 타겟으로 잡고 따라옴
 //타겟이 searchDistance보다 멀어질 경우 타겟 해제
@@ -7,6 +8,7 @@ public class Enemy_Normal : Enemy
 {
     void Awake()
     {
+        PV = GetComponent<PhotonView>();
         coll = GetComponent<BoxCollider>();
         nav = GetComponent<NavMeshAgent>();
         animator = GetComponentInChildren<Animator>();

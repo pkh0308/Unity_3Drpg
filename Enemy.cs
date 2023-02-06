@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using UnityEngine;
 using UnityEngine.AI;
+using Photon.Pun;
 
 //Enemy들의 기본 로직(이동, 공격 및 피격, 사망) 상속용 클래스
 //이벤트 주기 함수(Awake, Update 등)는 상속 받은 클래스에서 선언
@@ -51,6 +52,9 @@ public class Enemy : MonoBehaviour
     protected EnemyType type;
     public EnemyType Type { get { return type; } }
 
+    //네트워크
+    protected PhotonView PV;
+
     //ObjectManager에서 최초 생성 시 호출
     //최대체력 및 공격력, 이름을 설정
     public void Initialize(EnemyData data)
@@ -68,7 +72,7 @@ public class Enemy : MonoBehaviour
         onCombat = true;
         transform.LookAt(target.transform.position);
         animator.SetBool(AnimationVar.isMoving.ToString(), false);
-        animator.SetTrigger(AnimationVar.doAttack.ToString());
+        PV.RPC(nameof(SetTrigger_Attak), RpcTarget.All);
 
         //플레이어 피격 로직 호출
         if (target.TryGetComponent<Player>(out Player p) == false)
@@ -92,10 +96,10 @@ public class Enemy : MonoBehaviour
 
     //타겟이 없는 상태에서 피격 시 타겟으로 플레이어 설정(Normal 타입용)
     //체력이 0이 되는 경우 사망 로직 호출
-    public void OnDamaged(int dmg)
+    public void OnDamaged(int dmg, Transform playerTf)
     {
         if (target == null)
-            target = Player.getPlayer().gameObject.transform;
+            target = playerTf;
 
         if (curHp - dmg > 0)
         {
@@ -157,6 +161,13 @@ public class Enemy : MonoBehaviour
         if(hpBarSet != null) hpBarSet.SetActive(false);
         QuestManager.Instance.UpdateKillQuest(enemyId);
 
+        PV.RPC(nameof(StartDie), RpcTarget.All);
+    }
+
+    //Die 코루틴을 RPC로 실행하기 위한 함수
+    [PunRPC]
+    protected void StartDie()
+    {
         StartCoroutine(Die());
     }
 
@@ -166,5 +177,19 @@ public class Enemy : MonoBehaviour
 
         yield return new WaitForSeconds(disappearTime);
         gameObject.SetActive(false);
+    }
+
+    //애니메이터 트리거
+    //트리거는 자동 동기화가 안되므로 RPC로 호출
+    [PunRPC]
+    protected void SetTrigger_Attak()
+    {
+        animator.SetTrigger(AnimationVar.doAttack.ToString());
+    }
+
+    [PunRPC]
+    protected void SetTrigger_Die()
+    {
+        animator.SetTrigger(AnimationVar.onDie.ToString());
     }
 }

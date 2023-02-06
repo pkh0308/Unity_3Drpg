@@ -1,9 +1,13 @@
 ﻿using UnityEngine;
+using UnityEngine.UI;
+using TMPro;
 
 public class TitleManager : MonoBehaviour
 {
-    public void GameStart()
+    [SerializeField] TMP_InputField playerName;
+
+    public void Btn_GameStart()
     {
-        LoadingSceneManager.gameStart();
+        NetworkManager.Inst.MakeRoom(playerName.text);
     }
 }

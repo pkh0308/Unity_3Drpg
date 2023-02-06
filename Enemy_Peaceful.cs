@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using UnityEngine.AI;
+using Photon.Pun;
 
 //플레이어에게 공격받아도 반격하지 않는 타입
 //타겟이 항상 null이므로 Move 함수에서 타겟 관련 내용 제외
@@ -7,6 +8,7 @@ public class Enemy_Peaceful : Enemy
 {
     void Awake()
     {
+        PV = GetComponent<PhotonView>();
         coll = GetComponent<BoxCollider>();
         nav = GetComponent<NavMeshAgent>();
         animator = GetComponentInChildren<Animator>();
